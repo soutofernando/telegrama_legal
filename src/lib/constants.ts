@@ -1,5 +1,5 @@
-/** ISR do catálogo (segundos). Ajuste aqui ou via revalidatePath no admin. */
-export const CATALOG_REVALIDATE = 60;
+/** ISR do catálogo (segundos). Espelha `export const revalidate = 60` nas páginas da vitrine. */
+export const CATALOG_REVALIDATE_SECONDS = 60;
 
 export const WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "";

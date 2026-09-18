@@ -33,7 +33,8 @@ Preencha:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anon (pública) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role — **somente servidor** |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | Número com DDI (ex: `5511999999999`) |
-| `CATALOG_REVALIDATE_SECONDS` | ISR do catálogo (padrão `60`) |
+| `NEXT_PUBLIC_SITE_NAME` | Nome exibido na vitrine (opcional) |
+| `NEXT_PUBLIC_PICKUP_LOCATION` | Texto de retirada no checkout (opcional) |
 
 3. Aplique a migration no Supabase:
 
@@ -72,9 +73,25 @@ npm run dev
 
 ### Vercel
 
-1. Importe o repositório no Vercel.
-2. Configure as mesmas variáveis de `.env.example` (incluindo `SUPABASE_SERVICE_ROLE_KEY`).
-3. Deploy.
+1. Instale a CLI (opcional): `npm i -g vercel`
+2. Na raiz do projeto: `vercel login` e depois `vercel` (preview) ou `vercel --prod` (produção).
+3. Ou importe o repositório em [vercel.com/new](https://vercel.com/new) — o preset **Next.js** é detectado automaticamente (`vercel.json` define região **gru1** para functions).
+4. Em **Project → Settings → Environment Variables**, configure para **Production** e **Preview**:
+
+| Variável | Sensitive |
+|----------|-----------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Não |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Não |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Sim** |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Não |
+| `NEXT_PUBLIC_SITE_NAME` | Não |
+| `NEXT_PUBLIC_PICKUP_LOCATION` | Não |
+
+5. No Supabase → **Authentication → URL Configuration**, adicione:
+   - **Site URL**: `https://seu-dominio.vercel.app`
+   - **Redirect URLs**: `https://seu-dominio.vercel.app/**` e `http://localhost:3000/**`
+
+6. Rode um deploy de teste e abra `/`, `/loja` e `/admin/login`.
 
 Após alterar produtos no admin, o cache ISR é revalidado via `revalidatePath` nas Server Actions.
 

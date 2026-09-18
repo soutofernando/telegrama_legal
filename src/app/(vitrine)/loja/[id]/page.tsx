@@ -4,10 +4,9 @@ import {
   getPublicProductById,
 } from "@/lib/data/catalog";
 import { getSerenataSongs } from "@/lib/data/serenata-songs";
-import { CATALOG_REVALIDATE } from "@/lib/constants";
 import { ProductDetailView } from "@/components/vitrine/product-detail-view";
 
-export const revalidate = CATALOG_REVALIDATE;
+export const revalidate = 60;
 
 export default async function ProductPage({
   params,

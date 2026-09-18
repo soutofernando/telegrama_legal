@@ -3,13 +3,12 @@ import {
   getProductMaxQuantities,
   getPublicProducts,
 } from "@/lib/data/catalog";
-import { CATALOG_REVALIDATE } from "@/lib/constants";
 import {
   pickFeaturedProduct,
   pickHighlightProducts,
 } from "@/lib/catalog-helpers";
 
-export const revalidate = CATALOG_REVALIDATE;
+export const revalidate = 60;
 
 export default async function HomePage() {
   const products = await getPublicProducts();

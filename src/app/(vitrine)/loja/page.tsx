@@ -1,13 +1,12 @@
 import { CatalogExperience } from "@/components/vitrine/catalog-experience";
 import { CATALOG_CATEGORIES, type CatalogCategoryId } from "@/lib/catalog-helpers";
-import { CATALOG_REVALIDATE } from "@/lib/constants";
 import { getBestSellers } from "@/lib/data/best-sellers";
 import {
   getProductMaxQuantities,
   getPublicProducts,
 } from "@/lib/data/catalog";
 
-export const revalidate = CATALOG_REVALIDATE;
+export const revalidate = 60;
 
 function parseCategory(cat?: string): CatalogCategoryId {
   if (cat && CATALOG_CATEGORIES.some((c) => c.id === cat)) {

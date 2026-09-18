@@ -2,11 +2,16 @@
   "name": "telegrama_legal",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node --max-http-header-size=65536 ./node_modules/next/dist/bin/next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel:preview": "vercel",
+    "vercel:prod": "vercel --prod"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
