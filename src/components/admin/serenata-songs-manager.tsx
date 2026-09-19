@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
+import { LIST_PAGE_SIZE } from "@/lib/pagination";
 import type { SerenataSong } from "@/types/database";
 
 export function SerenataSongsManager({ songs }: { songs: SerenataSong[] }) {
@@ -20,6 +23,9 @@ export function SerenataSongsManager({ songs }: { songs: SerenataSong[] }) {
   const [form, setForm] = useState({ titulo: "", sort_order: "" });
   const [deleteTarget, setDeleteTarget] = useState<SerenataSong | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(songs, LIST_PAGE_SIZE);
 
   const startNew = () => {
     setEditing("new");
@@ -103,7 +109,7 @@ export function SerenataSongsManager({ songs }: { songs: SerenataSong[] }) {
         />
       ) : (
         <ul className="space-y-2">
-          {songs.map((song) => (
+          {visible.map((song) => (
             <li key={song.id}>
               <Card className="flex items-center justify-between gap-3 border border-border/80">
                 <div>
@@ -133,6 +139,16 @@ export function SerenataSongsManager({ songs }: { songs: SerenataSong[] }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {songs.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       <ConfirmDialog

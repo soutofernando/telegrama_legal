@@ -9,7 +9,11 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import {
+  FinanceProductList,
+  FinanceRecentOrdersList,
+} from "@/components/admin/finance-lists";
+import { formatCurrency } from "@/lib/format";
 import {
   loadFinanceSummary,
   PAYMENT_METHOD_LABELS,
@@ -99,58 +103,12 @@ export default async function FinanceAdminPage() {
 
           <section className="mt-8">
             <SectionHeader title="Por produto" />
-            <ul className="space-y-2">
-              {finance.byProduct.map((product) => (
-                <li
-                  key={product.productId}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-card)]"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {product.name}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {product.units}{" "}
-                      {product.units === 1 ? "unidade" : "unidades"}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-sm font-bold text-foreground">
-                    {formatCurrency(product.revenue)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <FinanceProductList products={finance.byProduct} />
           </section>
 
           <section className="mt-8">
             <SectionHeader title="Vendas recentes" />
-            <ul className="space-y-2">
-              {finance.recentOrders.map((order) => (
-                <li
-                  key={order.orderId}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-card px-4 py-3 shadow-[var(--shadow-card)]"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {order.buyerName}
-                    </p>
-                    <p className="truncate text-xs text-muted">
-                      {PAYMENT_METHOD_LABELS[order.paymentMethod]} ·{" "}
-                      {order.units}{" "}
-                      {order.units === 1 ? "unidade" : "unidades"}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-sm font-bold text-foreground">
-                      {formatCurrency(order.total)}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {formatDateTime(order.criadoEm)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <FinanceRecentOrdersList orders={finance.recentOrders} />
           </section>
         </>
       )}

@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
+import { LIST_PAGE_SIZE } from "@/lib/pagination";
 import type { DeliverySlot } from "@/types/database";
 
 export function SlotsManager({
@@ -27,6 +30,9 @@ export function SlotsManager({
   const [form, setForm] = useState({ horario: "", sort_order: "" });
   const [deleteTarget, setDeleteTarget] = useState<DeliverySlot | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(slots, LIST_PAGE_SIZE);
 
   const startNew = () => {
     setEditing("new");
@@ -76,7 +82,7 @@ export function SlotsManager({
             className="absolute bottom-2 left-[11px] top-2 w-0.5 bg-primary/15"
             aria-hidden
           />
-          {slots.map((slot) => {
+          {visible.map((slot) => {
             const count = pendingBySlot[slot.id] ?? 0;
             return (
               <div key={slot.id} className="relative pb-6">
@@ -125,6 +131,16 @@ export function SlotsManager({
             );
           })}
         </div>
+      )}
+
+      {slots.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       {(editing === "new" || editing) && (

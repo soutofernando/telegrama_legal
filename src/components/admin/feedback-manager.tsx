@@ -8,7 +8,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
 import { formatDateTime } from "@/lib/format";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import {
   FEEDBACK_STATUS_BADGE,
   FEEDBACK_STATUS_LABELS,
@@ -39,6 +42,10 @@ export function FeedbackManager({
       return true;
     });
   }, [items, typeFilter, statusFilter]);
+
+  const filterKey = `${typeFilter}|${statusFilter}`;
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(filtered, DEFAULT_PAGE_SIZE, filterKey);
 
   const openItem = (item: CustomerFeedbackWithTeam) => {
     setExpandedId(item.id);
@@ -102,7 +109,7 @@ export function FeedbackManager({
         />
       ) : (
         <ul className="space-y-3">
-          {filtered.map((item) => {
+          {visible.map((item) => {
             const expanded = expandedId === item.id;
             return (
               <li key={item.id}>
@@ -193,6 +200,16 @@ export function FeedbackManager({
             );
           })}
         </ul>
+      )}
+
+      {filtered.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

@@ -5,6 +5,18 @@ export const ADMIN_PRIMARY_NAV = [
   { href: "/admin/produtos", label: "Produtos", match: "prefix" as const },
 ] as const;
 
+/** Bottom bar on mobile: Itinerários replaces Equipes (Equipes lives under Mais). */
+export const ADMIN_MOBILE_PRIMARY_NAV = [
+  { href: "/admin", label: "Início", match: "exact" as const },
+  {
+    href: "/admin/itinerario",
+    label: "Itinerários",
+    match: "prefix" as const,
+  },
+  { href: "/admin/itens", label: "Itens", match: "prefix" as const },
+  { href: "/admin/produtos", label: "Produtos", match: "prefix" as const },
+] as const;
+
 export const ADMIN_MORE_LINKS = [
   {
     href: "/admin/financeiro",
@@ -30,6 +42,18 @@ export const ADMIN_MORE_LINKS = [
   },
   { href: "/", label: "Abrir loja", desc: "Vitrine pública" },
 ] as const;
+
+export const ADMIN_MOBILE_MORE_LINKS = ADMIN_MORE_LINKS.flatMap((link) =>
+  link.href === "/admin/itinerario"
+    ? [
+        {
+          href: "/admin/equipes",
+          label: "Equipes",
+          desc: "Quem recebe as entregas",
+        },
+      ]
+    : [link],
+);
 
 export const ADMIN_DESKTOP_LINKS = [
   ...ADMIN_PRIMARY_NAV.map((n) => ({ href: n.href, label: n.label })),

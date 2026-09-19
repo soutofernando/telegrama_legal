@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DeliveryTime } from "@/components/ui/delivery-time";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
+import { LIST_PAGE_SIZE } from "@/lib/pagination";
 import {
   collectItineraryDayKeys,
   formatItineraryDateLabel,
@@ -102,6 +105,19 @@ export function ItineraryView({
   const inRouteInSlot = activeSlotItems.filter(
     (i) => i.status === "in_progress",
   );
+
+  const slotDetailKey = `${selectedDay}|${selectedSlotId ?? ""}`;
+  const activePagination = usePaginatedItems(
+    activeSlotItems,
+    LIST_PAGE_SIZE,
+    slotDetailKey,
+  );
+  const deliveredPagination = usePaginatedItems(
+    deliveredSlotItems,
+    LIST_PAGE_SIZE,
+    `${slotDetailKey}|delivered`,
+  );
+  const slotsPagination = usePaginatedItems(slots, LIST_PAGE_SIZE, selectedDay);
 
   const countsBySlot = useMemo(() => {
     const map = new Map<string, { active: number; total: number }>();
@@ -260,7 +276,7 @@ export function ItineraryView({
           />
         ) : (
           <ul className="space-y-4">
-            {activeSlotItems.map((item) => {
+            {activePagination.visible.map((item) => {
               const canPick = item.status === "pending";
               const checked = pickedIds.has(item.id);
               return (
@@ -313,13 +329,23 @@ export function ItineraryView({
           </ul>
         )}
 
+        {activeSlotItems.length > 0 && (
+          <PaginationControls
+            page={activePagination.page}
+            totalPages={activePagination.pages}
+            totalItems={activePagination.totalItems}
+            pageSize={activePagination.pageSize}
+            onPageChange={activePagination.setPage}
+          />
+        )}
+
         {deliveredSlotItems.length > 0 && (
           <section className="space-y-3 pt-2">
             <h3 className="px-1 text-xs font-bold uppercase tracking-wide text-muted">
               Já entregues
             </h3>
             <ul className="space-y-2">
-              {deliveredSlotItems.map((item) => (
+              {deliveredPagination.visible.map((item) => (
                 <li
                   key={item.id}
                   className="rounded-2xl border border-border/50 bg-neutral-50/80 px-5 py-4 opacity-90"
@@ -331,6 +357,14 @@ export function ItineraryView({
                 </li>
               ))}
             </ul>
+            <PaginationControls
+              className="pt-2"
+              page={deliveredPagination.page}
+              totalPages={deliveredPagination.pages}
+              totalItems={deliveredPagination.totalItems}
+              pageSize={deliveredPagination.pageSize}
+              onPageChange={deliveredPagination.setPage}
+            />
           </section>
         )}
 
@@ -398,8 +432,9 @@ export function ItineraryView({
           icon={<PackageCheck className="h-7 w-7" strokeWidth={1.75} />}
         />
       ) : (
-        <ul className="space-y-3">
-          {slots.map((slot) => {
+        <>
+          <ul className="space-y-3">
+            {slotsPagination.visible.map((slot) => {
             const counts = countsBySlot.get(slot.id) ?? { active: 0, total: 0 };
             const hasPending = counts.active > 0;
             return (
@@ -445,7 +480,15 @@ export function ItineraryView({
               </li>
             );
           })}
-        </ul>
+          </ul>
+          <PaginationControls
+            page={slotsPagination.page}
+            totalPages={slotsPagination.pages}
+            totalItems={slotsPagination.totalItems}
+            pageSize={slotsPagination.pageSize}
+            onPageChange={slotsPagination.setPage}
+          />
+        </>
       )}
     </div>
   );

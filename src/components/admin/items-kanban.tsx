@@ -9,6 +9,9 @@ import { DeliveryTime } from "@/components/ui/delivery-time";
 import { formatDateTime } from "@/lib/format";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
+import { KANBAN_PAGE_SIZE } from "@/lib/pagination";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
@@ -94,6 +97,49 @@ function KanbanCard({ item }: { item: OrderItemWithRelations }) {
   );
 }
 
+function KanbanColumn({
+  col,
+  items,
+  resetKey,
+}: {
+  col: (typeof columns)[number];
+  items: OrderItemWithRelations[];
+  resetKey?: string | number;
+}) {
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(items, KANBAN_PAGE_SIZE, resetKey);
+
+  return (
+    <section
+      className={`flex w-[min(88vw,20rem)] shrink-0 snap-center flex-col rounded-2xl p-3 md:w-auto ${col.columnBg}`}
+    >
+      <header className="mb-3 flex items-center gap-2 px-1">
+        <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
+        <h2 className="text-sm font-bold text-foreground">{col.title}</h2>
+        <Badge variant={col.badge}>{items.length}</Badge>
+      </header>
+      <div className="flex flex-col gap-3">
+        {visible.map((item) => (
+          <KanbanCard key={item.id} item={item} />
+        ))}
+        {items.length === 0 && (
+          <p className="rounded-xl bg-card/70 px-3 py-8 text-center text-sm text-muted">
+            Nenhum item
+          </p>
+        )}
+        <PaginationControls
+          className="px-1 pt-1"
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
+      </div>
+    </section>
+  );
+}
+
 export function ItemsKanban({
   items,
   teams,
@@ -107,6 +153,8 @@ export function ItemsKanban({
   const [slotFilter, setSlotFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "">("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const filterKey = `${teamFilter}|${slotFilter}|${statusFilter}`;
 
   const activeFilterCount = [teamFilter, slotFilter, statusFilter].filter(
     Boolean,
@@ -281,26 +329,12 @@ export function ItemsKanban({
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {columns.map((col) => (
-          <section
+          <KanbanColumn
             key={col.id}
-            className={`flex w-[min(88vw,20rem)] shrink-0 snap-center flex-col rounded-2xl p-3 md:w-auto ${col.columnBg}`}
-          >
-            <header className="mb-3 flex items-center gap-2 px-1">
-              <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
-              <h2 className="text-sm font-bold text-foreground">{col.title}</h2>
-              <Badge variant={col.badge}>{byColumn[col.id].length}</Badge>
-            </header>
-            <div className="flex max-h-[min(70vh,36rem)] flex-col gap-3 overflow-y-auto pr-0.5">
-              {byColumn[col.id].map((item) => (
-                <KanbanCard key={item.id} item={item} />
-              ))}
-              {byColumn[col.id].length === 0 && (
-                <p className="rounded-xl bg-card/70 px-3 py-8 text-center text-sm text-muted">
-                  Nenhum item
-                </p>
-              )}
-            </div>
-          </section>
+            col={col}
+            items={byColumn[col.id]}
+            resetKey={filterKey}
+          />
         ))}
       </div>
     </div>

@@ -4,19 +4,19 @@ import {
   Ellipsis,
   Home,
   LayoutGrid,
+  MapPin,
   ShoppingBag,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ADMIN_PRIMARY_NAV } from "@/lib/admin-nav";
+import { ADMIN_MOBILE_PRIMARY_NAV } from "@/lib/admin-nav";
 import { AdminMoreSheet } from "@/components/admin/admin-more-sheet";
 
 const NAV_ICONS: Record<string, LucideIcon> = {
   Início: Home,
-  Equipes: Users,
+  Itinerários: MapPin,
   Itens: LayoutGrid,
   Produtos: ShoppingBag,
   Mais: Ellipsis,
@@ -45,7 +45,7 @@ export function AdminMobileNav() {
   const moreActive =
     pathname.startsWith("/admin/financeiro") ||
     pathname.startsWith("/admin/horarios") ||
-    pathname.startsWith("/admin/itinerario") ||
+    pathname.startsWith("/admin/equipes") ||
     pathname.startsWith("/admin/configuracoes") ||
     pathname.startsWith("/admin/atendimento") ||
     pathname.startsWith("/admin/serenatas");
@@ -58,7 +58,7 @@ export function AdminMobileNav() {
         aria-label="Admin mobile"
       >
         <ul className="mx-auto flex max-w-lg items-stretch justify-around">
-          {ADMIN_PRIMARY_NAV.map((item) => {
+          {ADMIN_MOBILE_PRIMARY_NAV.map((item) => {
             const active = isActive(pathname, item.href, item.match);
             return (
               <li key={item.href} className="flex-1">

@@ -12,8 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
 import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { PRODUCT_KINDS, PRODUCT_KIND_LABELS } from "@/lib/product-kind";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import type { Product, ProductKind } from "@/types/database";
 
 const LOW_STOCK = 15;
@@ -54,6 +57,9 @@ export function ProductsManager({ products }: { products: Product[] }) {
     promo_combo_quantidade: "",
     promo_combo_preco: "",
   });
+
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(products, DEFAULT_PAGE_SIZE);
 
   const reset = () => {
     setForm({
@@ -298,7 +304,7 @@ export function ProductsManager({ products }: { products: Product[] }) {
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {products.map((p) => {
+          {visible.map((p) => {
             const low = p.estoque <= LOW_STOCK;
             return (
               <li key={p.id}>
@@ -356,6 +362,16 @@ export function ProductsManager({ products }: { products: Product[] }) {
             );
           })}
         </ul>
+      )}
+
+      {products.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       <ConfirmDialog

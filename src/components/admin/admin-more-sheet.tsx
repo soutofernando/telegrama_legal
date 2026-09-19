@@ -4,20 +4,20 @@ import {
   Clock,
   ExternalLink,
   LogOut,
-  MapPin,
   Settings,
+  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "@/app/actions/admin";
-import { ADMIN_MORE_LINKS } from "@/lib/admin-nav";
+import { ADMIN_MOBILE_MORE_LINKS } from "@/lib/admin-nav";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 const MORE_ICONS: Record<string, LucideIcon> = {
   "/admin/financeiro": Wallet,
   "/admin/horarios": Clock,
-  "/admin/itinerario": MapPin,
+  "/admin/equipes": Users,
   "/admin/configuracoes": Settings,
   "/": ExternalLink,
 };
@@ -32,7 +32,7 @@ export function AdminMoreSheet({
   return (
     <BottomSheet open={open} onClose={onClose} title="Mais opções">
       <ul className="space-y-2">
-        {ADMIN_MORE_LINKS.map((link) => {
+        {ADMIN_MOBILE_MORE_LINKS.map((link) => {
           const Icon = MORE_ICONS[link.href] ?? ExternalLink;
           return (
             <li key={link.href}>

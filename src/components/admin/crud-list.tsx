@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
 import type { AdminActionResult } from "@/lib/admin-action-result";
+import { LIST_PAGE_SIZE } from "@/lib/pagination";
 
 export function CrudList<T extends { id: string }>({
   items,
@@ -34,6 +37,9 @@ export function CrudList<T extends { id: string }>({
   const [form, setForm] = useState<Record<string, string>>({});
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(items, LIST_PAGE_SIZE);
 
   const startNew = () => {
     setEditing("new");
@@ -109,7 +115,7 @@ export function CrudList<T extends { id: string }>({
         {items.length === 0 && (
           <li className="px-4 py-6 text-sm text-neutral-500">{emptyLabel}</li>
         )}
-        {items.map((item) => (
+        {visible.map((item) => (
           <li
             key={item.id}
             className="flex items-center justify-between gap-4 px-4 py-3 text-sm"
@@ -138,6 +144,14 @@ export function CrudList<T extends { id: string }>({
           </li>
         ))}
       </ul>
+
+      <PaginationControls
+        page={page}
+        totalPages={pages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setPage}
+      />
 
       <ConfirmDialog
         open={deleteTarget !== null}

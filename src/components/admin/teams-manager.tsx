@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import type { Team } from "@/types/database";
 
 export function TeamsManager({
@@ -29,6 +32,9 @@ export function TeamsManager({
   const filtered = teams.filter((t) =>
     t.nome.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(filtered, DEFAULT_PAGE_SIZE, search);
 
   const startNew = () => {
     setEditing("new");
@@ -99,7 +105,7 @@ export function TeamsManager({
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((team) => {
+          {visible.map((team) => {
             const pend = pendingByTeam[team.id] ?? 0;
             return (
               <li key={team.id}>
@@ -142,6 +148,16 @@ export function TeamsManager({
             );
           })}
         </ul>
+      )}
+
+      {filtered.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       <ConfirmDialog

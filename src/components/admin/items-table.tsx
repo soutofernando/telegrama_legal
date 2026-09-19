@@ -2,7 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { setOrderItemStatus } from "@/app/actions/admin";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { usePaginatedItems } from "@/hooks/use-pagination";
 import { formatDateTime } from "@/lib/format";
+import { LIST_PAGE_SIZE } from "@/lib/pagination";
 import { formatPrendaDestino } from "@/lib/gift-product";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import type { OrderItemWithRelations } from "@/types/database";
@@ -31,6 +34,10 @@ export function ItemsTable({
       return true;
     });
   }, [items, teamFilter, slotFilter, statusFilter]);
+
+  const filterKey = `${teamFilter}|${slotFilter}|${statusFilter}`;
+  const { visible, page, setPage, pages, totalItems, pageSize } =
+    usePaginatedItems(filtered, LIST_PAGE_SIZE, filterKey);
 
   const markDelivered = async (id: string) => {
     setLoadingId(id);
@@ -91,7 +98,7 @@ export function ItemsTable({
             </tr>
           </thead>
           <tbody>
-            {filtered.map((item) => (
+            {visible.map((item) => (
               <tr key={item.id} className="border-b border-neutral-50">
                 <td className="px-4 py-3 text-neutral-800">
                   {item.eh_presente
@@ -149,6 +156,16 @@ export function ItemsTable({
           </p>
         )}
       </div>
+
+      {filtered.length > 0 && (
+        <PaginationControls
+          page={page}
+          totalPages={pages}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
+      )}
     </div>
   );
 }

@@ -1,11 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  FinanceByProduct,
+  FinanceRecentOrder,
+  FinanceSummary,
+} from "@/lib/finance-types";
 import type { PaymentMethod } from "@/types/database";
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  whatsapp: "Pagar agora (WhatsApp)",
-  on_delivery: "Pagar na entrega",
-};
+export type {
+  FinanceByProduct,
+  FinanceRecentOrder,
+  FinanceSummary,
+} from "@/lib/finance-types";
+
+export { PAYMENT_METHOD_LABELS } from "@/lib/payment-labels";
 
 type FinanceRow = {
   id: string;
@@ -20,36 +28,6 @@ type FinanceRow = {
     criado_em: string;
     nome_comprador: string;
   } | null;
-};
-
-export type FinanceByProduct = {
-  productId: string;
-  name: string;
-  units: number;
-  revenue: number;
-};
-
-export type FinanceRecentOrder = {
-  orderId: string;
-  buyerName: string;
-  paymentMethod: PaymentMethod;
-  criadoEm: string;
-  total: number;
-  units: number;
-};
-
-export type FinanceSummary = {
-  totalRevenue: number;
-  orderCount: number;
-  unitsSold: number;
-  todayRevenue: number;
-  todayOrderCount: number;
-  byPayment: Record<
-    PaymentMethod,
-    { revenue: number; orderIds: Set<string> }
-  >;
-  byProduct: FinanceByProduct[];
-  recentOrders: FinanceRecentOrder[];
 };
 
 function startOfToday(): Date {
@@ -135,12 +113,10 @@ export function aggregateFinance(rows: FinanceRow[]): FinanceSummary {
     (a, b) => b.revenue - a.revenue,
   );
 
-  const recentOrders = [...orderMap.values()]
-    .sort(
-      (a, b) =>
-        new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime(),
-    )
-    .slice(0, 25);
+  const recentOrders = [...orderMap.values()].sort(
+    (a, b) =>
+      new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime(),
+  );
 
   return {
     totalRevenue,
