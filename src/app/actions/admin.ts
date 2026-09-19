@@ -349,18 +349,16 @@ export async function upsertOrderItemManual(data: {
   const admin = createAdminClient();
 
   if (data.id) {
-    const { error } = await admin
-      .from("order_items")
-      .update({
-        nome_recebedor: data.nome_recebedor,
-        equipe_destino_id: data.equipe_destino_id,
-        delivery_slot_id: data.delivery_slot_id,
-        product_id: data.product_id,
-        quantidade: data.quantidade,
-        status: data.status,
-      })
-      .eq("id", data.id);
-    if (error) throw error;
+    const { error } = await admin.rpc("update_order_item_admin", {
+      p_item_id: data.id,
+      p_nome_recebedor: data.nome_recebedor.trim(),
+      p_equipe_destino_id: data.equipe_destino_id,
+      p_delivery_slot_id: data.delivery_slot_id,
+      p_product_id: data.product_id,
+      p_quantidade: data.quantidade,
+      p_nome_comprador: null,
+    });
+    if (error) throw new Error(error.message);
   } else {
     const { data: order, error: orderError } = await admin
       .from("orders")
@@ -401,15 +399,7 @@ export async function setOrderItemStatus(
   id: string,
   status: "pending" | "in_progress" | "delivered",
 ) {
-  await requireAuth();
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("order_items")
-    .update({ status })
-    .eq("id", id);
-  if (error) throw error;
-  revalidatePath("/admin/itens");
-  revalidatePath("/admin/itinerario");
+  await setOrderItemsStatus([id], status);
 }
 
 export async function setOrderItemsStatus(
@@ -425,9 +415,30 @@ export async function setOrderItemsStatus(
     p_status: status,
     p_entregador_nome: entregadorNome?.trim() || null,
   });
-  if (error) throw error;
-  revalidatePath("/admin/itens");
-  revalidatePath("/admin/itinerario");
+  if (error) throw new Error(error.message);
+}
+
+export async function updateOrderItemAdmin(data: {
+  id: string;
+  nome_comprador?: string;
+  nome_recebedor: string;
+  equipe_destino_id: string;
+  delivery_slot_id: string;
+  product_id: string;
+  quantidade: number;
+}) {
+  await requireAuth();
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("update_order_item_admin", {
+    p_item_id: data.id,
+    p_nome_recebedor: data.nome_recebedor.trim(),
+    p_equipe_destino_id: data.equipe_destino_id,
+    p_delivery_slot_id: data.delivery_slot_id,
+    p_product_id: data.product_id,
+    p_quantidade: data.quantidade,
+    p_nome_comprador: data.nome_comprador?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function markGroupDelivered(

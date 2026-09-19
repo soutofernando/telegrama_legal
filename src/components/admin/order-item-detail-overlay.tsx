@@ -2,10 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
-import {
-  setOrderItemStatus,
-  setOrderItemsStatus,
-} from "@/app/actions/admin";
+import { OrderItemEditSection } from "@/components/admin/order-item-edit-section";
+import { setOrderItemsStatus } from "@/app/actions/admin";
 import { ItemDestinoDetail } from "@/components/admin/item-destino-detail";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -14,7 +12,7 @@ import { DeliveryTime } from "@/components/ui/delivery-time";
 import { formatCurrency } from "@/lib/format";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import { PAYMENT_METHOD_LABELS } from "@/lib/payment-labels";
-import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
+import type { DeliveryStatus, OrderItemWithRelations, ProductKind } from "@/types/database";
 
 const STATUS_OPTIONS: { value: DeliveryStatus; label: string }[] = [
   { value: "pending", label: "Aguardando pagamento" },
@@ -41,13 +39,18 @@ function DetailRow({ label, children }: { label: string; children: ReactNode }) 
 
 function OrderItemDetailBody({
   item,
+  teams,
+  slots,
+  products,
   onItemUpdated,
 }: {
   item: OrderItemWithRelations;
+  teams: { id: string; nome: string }[];
+  slots: { id: string; horario: string }[];
+  products: { id: string; nome: string; tipo?: ProductKind }[];
   onItemUpdated?: (item: OrderItemWithRelations) => void;
 }) {
   const payment = item.orders?.forma_pagamento;
-  const buyer = item.orders?.nome_comprador?.trim();
   const [status, setStatus] = useState<DeliveryStatus>(item.status);
   const [carrierName, setCarrierName] = useState(item.entregador_nome ?? "");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -80,25 +83,27 @@ function OrderItemDetailBody({
             carrierName.trim(),
           );
         } else {
-          await setOrderItemStatus(item.id, status);
+          await setOrderItemsStatus([item.id], status);
         }
-        const updated: OrderItemWithRelations = {
-          ...item,
-          status,
-          entregador_nome:
-            status === "in_progress"
-              ? carrierName.trim()
-              : item.entregador_nome,
-        };
-        onItemUpdated?.(updated);
       } catch {
         setActionError("Não foi possível atualizar o status. Tente de novo.");
+        return;
       }
+
+      const updated: OrderItemWithRelations = {
+        ...item,
+        status,
+        entregador_nome:
+          status === "in_progress"
+            ? carrierName.trim()
+            : item.entregador_nome,
+      };
+      onItemUpdated?.(updated);
     });
   };
 
   return (
-    <div className="max-h-[min(70vh,32rem)] overflow-y-auto pb-2">
+    <div className="max-h-[min(85vh,40rem)] overflow-y-auto pb-2">
       <div className="mb-4">
         <Badge
           variant={
@@ -164,12 +169,17 @@ function OrderItemDetailBody({
         </Button>
       </section>
 
+      <OrderItemEditSection
+        item={item}
+        teams={teams}
+        slots={slots}
+        products={products}
+        onItemUpdated={onItemUpdated}
+      />
+
       <ItemDestinoDetail item={item} />
 
       <div className="mt-4 rounded-2xl border border-border/70 bg-background px-4">
-        {buyer && (
-          <DetailRow label="Comprador">{buyer}</DetailRow>
-        )}
         {payment && (
           <DetailRow label="Pagamento">
             {PAYMENT_METHOD_LABELS[payment]}
@@ -244,10 +254,16 @@ function DesktopDetailDialog({
 
 export function OrderItemDetailOverlay({
   item,
+  teams,
+  slots,
+  products,
   onClose,
   onItemUpdated,
 }: {
   item: OrderItemWithRelations | null;
+  teams: { id: string; nome: string }[];
+  slots: { id: string; horario: string }[];
+  products: { id: string; nome: string; tipo?: ProductKind }[];
   onClose: () => void;
   onItemUpdated?: (item: OrderItemWithRelations) => void;
 }) {
@@ -258,12 +274,24 @@ export function OrderItemDetailOverlay({
     <>
       <BottomSheet open={open} onClose={onClose} title={title}>
         {item && (
-          <OrderItemDetailBody item={item} onItemUpdated={onItemUpdated} />
+          <OrderItemDetailBody
+            item={item}
+            teams={teams}
+            slots={slots}
+            products={products}
+            onItemUpdated={onItemUpdated}
+          />
         )}
       </BottomSheet>
       <DesktopDetailDialog open={open} onClose={onClose} title={title}>
         {item && (
-          <OrderItemDetailBody item={item} onItemUpdated={onItemUpdated} />
+          <OrderItemDetailBody
+            item={item}
+            teams={teams}
+            slots={slots}
+            products={products}
+            onItemUpdated={onItemUpdated}
+          />
         )}
       </DesktopDetailDialog>
     </>

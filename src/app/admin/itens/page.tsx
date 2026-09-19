@@ -20,7 +20,7 @@ export default async function ItemsAdminPage() {
     loadItems(),
     supabase.from("teams").select("id, nome").order("nome"),
     supabase.from("delivery_slots").select("id, horario").order("sort_order"),
-    supabase.from("products").select("id, nome").order("nome"),
+    supabase.from("products").select("id, nome, tipo").order("nome"),
   ]);
 
   return (
@@ -37,6 +37,7 @@ export default async function ItemsAdminPage() {
         initialItems={items}
         teams={teamsRes.data ?? []}
         slots={slotsRes.data ?? []}
+        products={productsRes.data ?? []}
       />
     </AdminShell>
   );

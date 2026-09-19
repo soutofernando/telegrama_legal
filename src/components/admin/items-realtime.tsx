@@ -4,16 +4,18 @@ import { useEffect, useState } from "react";
 import { ORDER_ITEMS_ADMIN_SELECT } from "@/lib/order-items-select";
 import { createClient } from "@/lib/supabase/client";
 import { ItemsKanban } from "@/components/admin/items-kanban";
-import type { OrderItemWithRelations } from "@/types/database";
+import type { OrderItemWithRelations, ProductKind } from "@/types/database";
 
 export function ItemsRealtime({
   initialItems,
   teams,
   slots,
+  products,
 }: {
   initialItems: OrderItemWithRelations[];
   teams: { id: string; nome: string }[];
   slots: { id: string; horario: string }[];
+  products: { id: string; nome: string; tipo?: ProductKind }[];
 }) {
   const [items, setItems] = useState(initialItems);
 
@@ -44,6 +46,7 @@ export function ItemsRealtime({
       items={items}
       teams={teams}
       slots={slots}
+      products={products}
       onItemUpdated={(updated) =>
         setItems((prev) =>
           prev.map((row) => (row.id === updated.id ? updated : row)),

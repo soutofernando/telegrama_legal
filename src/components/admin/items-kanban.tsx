@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarClock, Check, Gift } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -200,11 +200,13 @@ export function ItemsKanban({
   items,
   teams,
   slots,
+  products,
   onItemUpdated,
 }: {
   items: OrderItemWithRelations[];
   teams: { id: string; nome: string }[];
   slots: { id: string; horario: string }[];
+  products: { id: string; nome: string; tipo?: ProductKind }[];
   onItemUpdated?: (item: OrderItemWithRelations) => void;
 }) {
   const [teamFilter, setTeamFilter] = useState("");
@@ -215,6 +217,13 @@ export function ItemsKanban({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedItem, setSelectedItem] =
     useState<OrderItemWithRelations | null>(null);
+
+  useEffect(() => {
+    setSelectedItem((current) => {
+      if (!current) return current;
+      return items.find((row) => row.id === current.id) ?? current;
+    });
+  }, [items]);
 
   const filterKey = `${teamFilter}|${slotFilter}|${statusFilter}|${kindFilter}|${nameFilter}`;
 
@@ -463,6 +472,9 @@ export function ItemsKanban({
 
       <OrderItemDetailOverlay
         item={selectedItem}
+        teams={teams}
+        slots={slots}
+        products={products}
         onClose={() => setSelectedItem(null)}
         onItemUpdated={(updated) => {
           setSelectedItem(updated);
