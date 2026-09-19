@@ -39,5 +39,16 @@ export function ItemsRealtime({
     };
   }, []);
 
-  return <ItemsKanban items={items} teams={teams} slots={slots} />;
+  return (
+    <ItemsKanban
+      items={items}
+      teams={teams}
+      slots={slots}
+      onItemUpdated={(updated) =>
+        setItems((prev) =>
+          prev.map((row) => (row.id === updated.id ? updated : row)),
+        )
+      }
+    />
+  );
 }

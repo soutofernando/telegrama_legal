@@ -1,19 +1,31 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useState, useTransition } from "react";
+import {
+  setOrderItemStatus,
+  setOrderItemsStatus,
+} from "@/app/actions/admin";
 import { ItemDestinoDetail } from "@/components/admin/item-destino-detail";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
 import { DeliveryTime } from "@/components/ui/delivery-time";
 import { formatCurrency } from "@/lib/format";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import { PAYMENT_METHOD_LABELS } from "@/lib/payment-labels";
 import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
 
+const STATUS_OPTIONS: { value: DeliveryStatus; label: string }[] = [
+  { value: "pending", label: "Aguardando pagamento" },
+  { value: "in_progress", label: "Em andamento" },
+  { value: "delivered", label: "Entregue" },
+];
+
 const STATUS_LABELS: Record<DeliveryStatus, string> = {
-  pending: "Aguardando pagamento",
-  in_progress: "Em andamento",
-  delivered: "Entregue",
+  pending: STATUS_OPTIONS[0].label,
+  in_progress: STATUS_OPTIONS[1].label,
+  delivered: STATUS_OPTIONS[2].label,
 };
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
@@ -27,9 +39,63 @@ function DetailRow({ label, children }: { label: string; children: ReactNode }) 
   );
 }
 
-function OrderItemDetailBody({ item }: { item: OrderItemWithRelations }) {
+function OrderItemDetailBody({
+  item,
+  onItemUpdated,
+}: {
+  item: OrderItemWithRelations;
+  onItemUpdated?: (item: OrderItemWithRelations) => void;
+}) {
   const payment = item.orders?.forma_pagamento;
   const buyer = item.orders?.nome_comprador?.trim();
+  const [status, setStatus] = useState<DeliveryStatus>(item.status);
+  const [carrierName, setCarrierName] = useState(item.entregador_nome ?? "");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [saving, startSave] = useTransition();
+
+  useEffect(() => {
+    setStatus(item.status);
+    setCarrierName(item.entregador_nome ?? "");
+    setActionError(null);
+  }, [item.id, item.status, item.entregador_nome]);
+
+  const statusDirty =
+    status !== item.status ||
+    (status === "in_progress" &&
+      carrierName.trim() !== (item.entregador_nome ?? "").trim());
+
+  const saveStatus = () => {
+    setActionError(null);
+    if (status === "in_progress" && !carrierName.trim()) {
+      setActionError("Informe quem está na rota para colocar em andamento.");
+      return;
+    }
+
+    startSave(async () => {
+      try {
+        if (status === "in_progress") {
+          await setOrderItemsStatus(
+            [item.id],
+            "in_progress",
+            carrierName.trim(),
+          );
+        } else {
+          await setOrderItemStatus(item.id, status);
+        }
+        const updated: OrderItemWithRelations = {
+          ...item,
+          status,
+          entregador_nome:
+            status === "in_progress"
+              ? carrierName.trim()
+              : item.entregador_nome,
+        };
+        onItemUpdated?.(updated);
+      } catch {
+        setActionError("Não foi possível atualizar o status. Tente de novo.");
+      }
+    });
+  };
 
   return (
     <div className="max-h-[min(70vh,32rem)] overflow-y-auto pb-2">
@@ -46,6 +112,57 @@ function OrderItemDetailBody({ item }: { item: OrderItemWithRelations }) {
           {STATUS_LABELS[item.status]}
         </Badge>
       </div>
+
+      <section className="mb-4 rounded-2xl border border-border/70 bg-background p-4">
+        <label className="block">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+            Status do pedido
+          </span>
+          <select
+            value={status}
+            onChange={(e) =>
+              setStatus(e.target.value as DeliveryStatus)
+            }
+            className="input-field mt-2 w-full text-base"
+            disabled={saving}
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {status === "in_progress" && (
+          <label className="mt-3 block">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+              Quem está na rota
+            </span>
+            <input
+              type="text"
+              value={carrierName}
+              onChange={(e) => setCarrierName(e.target.value)}
+              placeholder="Nome de quem leva o item"
+              className="input-field mt-2 w-full text-base"
+              autoComplete="name"
+              disabled={saving}
+            />
+          </label>
+        )}
+        {actionError && (
+          <p className="mt-3 text-sm font-medium text-accent" role="alert">
+            {actionError}
+          </p>
+        )}
+        <Button
+          variant="primary"
+          className="mt-4 w-full"
+          disabled={saving || !statusDirty}
+          onClick={saveStatus}
+        >
+          {saving ? "Salvando…" : "Salvar status"}
+        </Button>
+      </section>
 
       <ItemDestinoDetail item={item} />
 
@@ -128,9 +245,11 @@ function DesktopDetailDialog({
 export function OrderItemDetailOverlay({
   item,
   onClose,
+  onItemUpdated,
 }: {
   item: OrderItemWithRelations | null;
   onClose: () => void;
+  onItemUpdated?: (item: OrderItemWithRelations) => void;
 }) {
   const open = item != null;
   const title = "Detalhes do item";
@@ -138,10 +257,14 @@ export function OrderItemDetailOverlay({
   return (
     <>
       <BottomSheet open={open} onClose={onClose} title={title}>
-        {item && <OrderItemDetailBody item={item} />}
+        {item && (
+          <OrderItemDetailBody item={item} onItemUpdated={onItemUpdated} />
+        )}
       </BottomSheet>
       <DesktopDetailDialog open={open} onClose={onClose} title={title}>
-        {item && <OrderItemDetailBody item={item} />}
+        {item && (
+          <OrderItemDetailBody item={item} onItemUpdated={onItemUpdated} />
+        )}
       </DesktopDetailDialog>
     </>
   );

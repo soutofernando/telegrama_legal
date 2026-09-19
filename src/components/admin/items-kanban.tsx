@@ -198,10 +198,12 @@ export function ItemsKanban({
   items,
   teams,
   slots,
+  onItemUpdated,
 }: {
   items: OrderItemWithRelations[];
   teams: { id: string; nome: string }[];
   slots: { id: string; horario: string }[];
+  onItemUpdated?: (item: OrderItemWithRelations) => void;
 }) {
   const [teamFilter, setTeamFilter] = useState("");
   const [slotFilter, setSlotFilter] = useState("");
@@ -460,6 +462,10 @@ export function ItemsKanban({
       <OrderItemDetailOverlay
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
+        onItemUpdated={(updated) => {
+          setSelectedItem(updated);
+          onItemUpdated?.(updated);
+        }}
       />
     </div>
   );
