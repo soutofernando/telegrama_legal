@@ -1,6 +1,6 @@
 import type { CartLine } from "@/types/database";
 import { formatCurrency } from "@/lib/format";
-import { cartLinePricing, lineTotal } from "@/lib/product-pricing";
+import { allocateCartLineTotals } from "@/lib/product-pricing";
 
 export const DEFAULT_WHATSAPP_MESSAGE_TEMPLATE = `Olá! Sou {{nome}}. Acabei de fazer um pedido no Telegrama Legal:
 
@@ -18,10 +18,11 @@ export function normalizeWhatsAppNumber(raw: string): string {
 }
 
 export function formatOrderItemsLines(items: CartLine[]): string {
+  const amounts = allocateCartLineTotals(items);
   return items
     .map(
       (i) =>
-        `• ${i.nome} x${i.quantidade} — ${formatCurrency(lineTotal(i.quantidade, cartLinePricing(i)))}`,
+        `• ${i.nome} x${i.quantidade} — ${formatCurrency(amounts.get(i.lineId) ?? 0)}`,
     )
     .join("\n");
 }

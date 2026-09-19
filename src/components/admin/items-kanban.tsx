@@ -14,8 +14,17 @@ import { usePaginatedItems } from "@/hooks/use-pagination";
 import { KANBAN_PAGE_SIZE } from "@/lib/pagination";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
 import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
+import { OrderItemDetailOverlay } from "@/components/admin/order-item-detail-overlay";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
+import {
+  PRODUCT_KIND_LABELS,
+  PRODUCT_KINDS,
+} from "@/lib/product-kind";
+import type {
+  DeliveryStatus,
+  OrderItemWithRelations,
+  ProductKind,
+} from "@/types/database";
 
 const columns: {
   id: DeliveryStatus;
@@ -26,7 +35,7 @@ const columns: {
 }[] = [
   {
     id: "pending",
-    title: "Pendente",
+    title: "Aguardando pagamento",
     dot: "bg-accent",
     columnBg: "bg-accent-soft/40",
     badge: "accent",
@@ -48,17 +57,49 @@ const columns: {
 ];
 
 const STATUS_OPTIONS: { value: DeliveryStatus; label: string }[] = [
-  { value: "pending", label: "Pendente" },
+  { value: "pending", label: "Aguardando pagamento" },
   { value: "in_progress", label: "Em andamento" },
   { value: "delivered", label: "Entregue" },
 ];
 
-function KanbanCard({ item }: { item: OrderItemWithRelations }) {
+function normalizeNameSearch(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+function itemMatchesNameFilter(
+  item: OrderItemWithRelations,
+  query: string,
+): boolean {
+  const q = normalizeNameSearch(query);
+  if (!q) return true;
+  const haystack = [
+    item.nome_recebedor,
+    item.teams?.nome,
+    item.products?.nome,
+    item.entregador_nome,
+  ]
+    .filter(Boolean)
+    .map((part) => normalizeNameSearch(part as string));
+  return haystack.some((part) => part.includes(q));
+}
+
+function KanbanCard({
+  item,
+  onSelect,
+}: {
+  item: OrderItemWithRelations;
+  onSelect: (item: OrderItemWithRelations) => void;
+}) {
   const delivered = item.status === "delivered";
 
   return (
     <Card
-      className={`border border-border/80 ${delivered ? "opacity-80" : ""}`}
+      onClick={() => onSelect(item)}
+      className={`w-full border border-border/80 text-left ${delivered ? "opacity-80" : ""}`}
       padding="sm"
     >
       <div className="flex items-start justify-between gap-2">
@@ -91,6 +132,11 @@ function KanbanCard({ item }: { item: OrderItemWithRelations }) {
           {FULFILLMENT_LABELS[item.fulfillment_type ?? "delivery"]}
         </span>
         <DeliveryTime horario={item.delivery_slots?.horario} />
+        {item.status === "in_progress" && item.entregador_nome && (
+          <span className="rounded-full bg-secondary-soft px-2 py-0.5 text-xs font-semibold text-foreground">
+            Com {item.entregador_nome}
+          </span>
+        )}
       </div>
       <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted">
         <CalendarClock className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -107,10 +153,12 @@ function KanbanColumn({
   col,
   items,
   resetKey,
+  onSelectItem,
 }: {
   col: (typeof columns)[number];
   items: OrderItemWithRelations[];
   resetKey?: string | number;
+  onSelectItem: (item: OrderItemWithRelations) => void;
 }) {
   const { visible, page, setPage, pages, totalItems, pageSize } =
     usePaginatedItems(items, KANBAN_PAGE_SIZE, resetKey);
@@ -126,7 +174,7 @@ function KanbanColumn({
       </header>
       <div className="flex flex-col gap-3">
         {visible.map((item) => (
-          <KanbanCard key={item.id} item={item} />
+          <KanbanCard key={item.id} item={item} onSelect={onSelectItem} />
         ))}
         {items.length === 0 && (
           <p className="rounded-xl bg-card/70 px-3 py-8 text-center text-sm text-muted">
@@ -158,22 +206,32 @@ export function ItemsKanban({
   const [teamFilter, setTeamFilter] = useState("");
   const [slotFilter, setSlotFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "">("");
+  const [kindFilter, setKindFilter] = useState<ProductKind | "">("");
+  const [nameFilter, setNameFilter] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedItem, setSelectedItem] =
+    useState<OrderItemWithRelations | null>(null);
 
-  const filterKey = `${teamFilter}|${slotFilter}|${statusFilter}`;
+  const filterKey = `${teamFilter}|${slotFilter}|${statusFilter}|${kindFilter}|${nameFilter}`;
 
-  const activeFilterCount = [teamFilter, slotFilter, statusFilter].filter(
-    Boolean,
-  ).length;
+  const activeFilterCount = [
+    teamFilter,
+    slotFilter,
+    statusFilter,
+    kindFilter,
+    nameFilter.trim(),
+  ].filter(Boolean).length;
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
       if (teamFilter && item.equipe_destino_id !== teamFilter) return false;
       if (slotFilter && item.delivery_slot_id !== slotFilter) return false;
       if (statusFilter && item.status !== statusFilter) return false;
+      if (kindFilter && item.products?.tipo !== kindFilter) return false;
+      if (!itemMatchesNameFilter(item, nameFilter)) return false;
       return true;
     });
-  }, [items, teamFilter, slotFilter, statusFilter]);
+  }, [items, teamFilter, slotFilter, statusFilter, kindFilter, nameFilter]);
 
   const byColumn = useMemo(() => {
     const map: Record<DeliveryStatus, OrderItemWithRelations[]> = {
@@ -211,6 +269,14 @@ export function ItemsKanban({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          placeholder="Buscar por nome"
+          className="input-field w-full min-h-11 text-sm md:max-w-[11rem]"
+          aria-label="Buscar por nome"
+        />
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
@@ -257,6 +323,21 @@ export function ItemsKanban({
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
+          <select
+            value={kindFilter}
+            onChange={(e) =>
+              setKindFilter(e.target.value as ProductKind | "")
+            }
+            className="input-field max-w-[12rem] text-sm"
+            aria-label="Filtrar por tipo de prenda"
+          >
+            <option value="">Todos os tipos</option>
+            {PRODUCT_KINDS.map((kind) => (
+              <option key={kind} value={kind}>
+                {PRODUCT_KIND_LABELS[kind]}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -266,6 +347,18 @@ export function ItemsKanban({
         title="Filtros"
       >
         <div className="space-y-4">
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-foreground">
+              Nome
+            </label>
+            <input
+              type="search"
+              value={nameFilter}
+              onChange={(e) => setNameFilter(e.target.value)}
+              placeholder="Quem recebe, equipe ou produto"
+              className="input-field text-base"
+            />
+          </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-foreground">
               Equipe
@@ -293,6 +386,25 @@ export function ItemsKanban({
               <option value="">Todos</option>
               {slots.map((s) => (
                 <option key={s.id} value={s.id}>{s.horario}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-foreground">
+              Tipo
+            </label>
+            <select
+              value={kindFilter}
+              onChange={(e) =>
+                setKindFilter(e.target.value as ProductKind | "")
+              }
+              className="input-field text-base"
+            >
+              <option value="">Todos</option>
+              {PRODUCT_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {PRODUCT_KIND_LABELS[kind]}
+                </option>
               ))}
             </select>
           </div>
@@ -340,9 +452,15 @@ export function ItemsKanban({
             col={col}
             items={byColumn[col.id]}
             resetKey={filterKey}
+            onSelectItem={setSelectedItem}
           />
         ))}
       </div>
+
+      <OrderItemDetailOverlay
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+      />
     </div>
   );
 }

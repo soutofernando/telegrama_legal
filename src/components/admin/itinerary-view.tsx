@@ -53,6 +53,7 @@ export function ItineraryView({
   const [selectedDay, setSelectedDay] = useState(getTodayItineraryKey);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [pickedIds, setPickedIds] = useState<Set<string>>(() => new Set());
+  const [carrierName, setCarrierName] = useState("");
 
   const slots = useMemo(() => sortSlots(initialSlots), [initialSlots]);
 
@@ -148,16 +149,28 @@ export function ItineraryView({
       pendingInSlot.some((i) => i.id === id),
     );
     if (ids.length === 0) return;
+    const nome = carrierName.trim();
+    if (!nome) {
+      setActionError("Informe quem está levando os itens na rota.");
+      return;
+    }
     setBusy("route");
     setActionError(null);
     try {
-      await setOrderItemsStatus(ids, "in_progress");
+      await setOrderItemsStatus(ids, "in_progress", nome);
       setItems((prev) =>
         prev.map((i) =>
-          ids.includes(i.id) ? { ...i, status: "in_progress" as const } : i,
+          ids.includes(i.id)
+            ? {
+                ...i,
+                status: "in_progress" as const,
+                entregador_nome: nome,
+              }
+            : i,
         ),
       );
       setPickedIds(new Set());
+      setCarrierName("");
     } catch {
       setActionError(
         "Não foi possível colocar em rota. Tente de novo em alguns segundos.",
@@ -253,6 +266,19 @@ export function ItineraryView({
                 Selecione os itens que você vai levar, coloque em rota e
                 entregue um a um.
               </p>
+              <label className="mt-4 block">
+                <span className="text-sm font-semibold text-foreground">
+                  Quem está na rota
+                </span>
+                <input
+                  type="text"
+                  value={carrierName}
+                  onChange={(e) => setCarrierName(e.target.value)}
+                  placeholder="Seu nome"
+                  className="input-field mt-2 w-full text-base"
+                  autoComplete="name"
+                />
+              </label>
               <Button
                 variant="primary"
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 sm:w-auto"
@@ -305,6 +331,12 @@ export function ItineraryView({
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="mb-4 flex flex-wrap items-start justify-end gap-2">
+                          {item.status === "in_progress" &&
+                            item.entregador_nome && (
+                              <Badge variant="secondary">
+                                Com {item.entregador_nome}
+                              </Badge>
+                            )}
                           {statusBadge(item.status)}
                         </div>
                         <ItemDestinoDetail item={item} />

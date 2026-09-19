@@ -87,6 +87,8 @@ export interface OrderItem {
   fulfillment_type?: FulfillmentType;
   eh_presente: boolean;
   status: DeliveryStatus;
+  entregador_nome?: string | null;
+  valor_linha?: number | null;
   criado_em: string;
 }
 
@@ -94,6 +96,7 @@ export interface OrderItemWithRelations extends OrderItem {
   teams?: { nome: string };
   delivery_slots?: { horario: string; sort_order?: number };
   products?: { nome: string; tipo?: ProductKind };
+  orders?: Pick<Order, "nome_comprador" | "forma_pagamento">;
 }
 
 export interface CartLine {

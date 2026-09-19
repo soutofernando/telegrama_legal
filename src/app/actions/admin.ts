@@ -381,7 +381,7 @@ export async function upsertOrderItemManual(data: {
       delivery_slot_id: data.delivery_slot_id,
       product_id: data.product_id,
       quantidade: data.quantidade,
-      status: data.status,
+      status: "delivered",
       eh_presente: true,
     });
     if (error) throw error;
@@ -415,6 +415,7 @@ export async function setOrderItemStatus(
 export async function setOrderItemsStatus(
   ids: string[],
   status: "pending" | "in_progress" | "delivered",
+  entregadorNome?: string,
 ) {
   if (ids.length === 0) return;
   await requireAuth();
@@ -422,6 +423,7 @@ export async function setOrderItemsStatus(
   const { error } = await admin.rpc("set_order_items_status", {
     p_ids: ids,
     p_status: status,
+    p_entregador_nome: entregadorNome?.trim() || null,
   });
   if (error) throw error;
   revalidatePath("/admin/itens");

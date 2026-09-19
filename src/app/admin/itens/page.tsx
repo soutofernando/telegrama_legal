@@ -1,6 +1,7 @@
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ItemsRealtime } from "@/components/admin/items-realtime";
 import { ManualItemForm } from "@/components/admin/manual-item-form";
+import { ORDER_ITEMS_ADMIN_SELECT } from "@/lib/order-items-select";
 import { createClient } from "@/lib/supabase/server";
 import type { OrderItemWithRelations } from "@/types/database";
 
@@ -8,9 +9,7 @@ async function loadItems() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("order_items")
-    .select(
-      "*, teams!order_items_equipe_destino_id_fkey(nome), delivery_slots(horario), products(nome, tipo)",
-    )
+    .select(ORDER_ITEMS_ADMIN_SELECT)
     .order("criado_em", { ascending: false });
   return (data ?? []) as OrderItemWithRelations[];
 }

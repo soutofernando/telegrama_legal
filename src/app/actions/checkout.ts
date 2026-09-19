@@ -42,6 +42,8 @@ export async function placeOrderAction(
     revalidatePath("/");
     revalidatePath("/loja");
     revalidatePath("/loja/[id]", "page");
+    revalidatePath("/admin/itens");
+    revalidatePath("/admin/itinerario");
 
     return { ok: true, orderId: data as string };
   } catch (e) {

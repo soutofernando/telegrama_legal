@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { cartLineId } from "@/lib/product-kind";
-import { cartLinePricing, lineTotal } from "@/lib/product-pricing";
+import { cartLineAmount, cartSubtotal } from "@/lib/product-pricing";
 import type { CartLine } from "@/types/database";
 
 const STORAGE_KEY = "telegrama-legal-cart";
@@ -36,6 +36,7 @@ interface CartContextValue {
   removeItem: (lineId: string) => void;
   clearCart: () => void;
   subtotal: number;
+  lineAmount: (line: CartLine) => number;
   totalItems: number;
 }
 
@@ -130,12 +131,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => setItems([]), []);
 
-  const subtotal = useMemo(
-    () =>
-      items.reduce(
-        (s, i) => s + lineTotal(i.quantidade, cartLinePricing(i)),
-        0,
-      ),
+  const subtotal = useMemo(() => cartSubtotal(items), [items]);
+
+  const lineAmount = useCallback(
+    (line: CartLine) => cartLineAmount(line, items),
     [items],
   );
 
@@ -152,6 +151,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       clearCart,
       subtotal,
+      lineAmount,
       totalItems,
     }),
     [
@@ -161,6 +161,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeItem,
       clearCart,
       subtotal,
+      lineAmount,
       totalItems,
     ],
   );

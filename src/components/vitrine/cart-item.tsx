@@ -4,6 +4,7 @@ import { ProductImage } from "@/components/vitrine/product-image";
 import { QuantitySelector } from "@/components/vitrine/quantity-selector";
 import { formatCurrency } from "@/lib/format";
 import { cartLinePricing, lineTotal } from "@/lib/product-pricing";
+import { useCart } from "@/context/cart-context";
 import type { CartLine } from "@/types/database";
 
 export function CartItem({
@@ -15,6 +16,8 @@ export function CartItem({
   onUpdateQuantity: (qty: number) => void;
   onRemove: () => void;
 }) {
+  const { lineAmount } = useCart();
+  const lineTotalValue = lineAmount(item);
   return (
     <li className="rounded-3xl border border-border bg-card p-4 shadow-sm">
       <div className="flex gap-4">
@@ -54,7 +57,7 @@ export function CartItem({
               onChange={onUpdateQuantity}
             />
             <p className="text-base font-bold text-primary">
-              {formatCurrency(lineTotal(item.quantidade, cartLinePricing(item)))}
+              {formatCurrency(lineTotalValue)}
             </p>
           </div>
         </div>
