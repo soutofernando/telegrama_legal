@@ -13,6 +13,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { usePaginatedItems } from "@/hooks/use-pagination";
 import { KANBAN_PAGE_SIZE } from "@/lib/pagination";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
+import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
 
@@ -76,9 +77,14 @@ function KanbanCard({ item }: { item: OrderItemWithRelations }) {
           </span>
         )}
       </div>
-      <p className="mt-3 text-sm font-semibold text-foreground">
-        {item.products?.nome ?? "—"}
-      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {item.products?.tipo && (
+          <ProductKindBadge kind={item.products.tipo} />
+        )}
+        <p className="text-sm font-semibold text-foreground">
+          {item.products?.nome ?? "—"}
+        </p>
+      </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
         <span>{item.quantidade} un.</span>
         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-700">

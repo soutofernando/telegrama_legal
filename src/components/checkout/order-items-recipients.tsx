@@ -9,13 +9,8 @@ import {
   recipientSummary,
   type LineUnitRecipient,
 } from "@/lib/checkout-recipients";
-import { PRODUCT_KIND_LABELS } from "@/lib/product-kind";
-import type { CartLine, ProductKind, Team } from "@/types/database";
-
-function kindLabel(tipo: ProductKind | undefined): string {
-  if (!tipo) return "Item";
-  return PRODUCT_KIND_LABELS[tipo];
-}
+import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
+import type { CartLine, Team } from "@/types/database";
 
 export function OrderItemsRecipients({
   items,
@@ -128,11 +123,7 @@ export function OrderItemsRecipients({
                     <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-neutral-600 ring-1 ring-neutral-200">
                       × {line.quantidade}
                     </span>
-                    {line.tipo && (
-                      <span className="rounded-full bg-ecri-blue/10 px-2 py-0.5 text-xs font-medium text-ecri-blue">
-                        {kindLabel(line.tipo)}
-                      </span>
-                    )}
+                    {line.tipo && <ProductKindBadge kind={line.tipo} />}
                   </span>
                   <span className="mt-1 block text-xs text-neutral-500">
                     {summary}

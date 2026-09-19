@@ -1,5 +1,7 @@
 import { CalendarClock, Gift, Music2, Package, User, Users } from "lucide-react";
+import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { formatDateTime } from "@/lib/format";
+import { PRODUCT_KIND_BADGE_CLASS } from "@/lib/product-kind";
 import type { OrderItemWithRelations } from "@/types/database";
 
 function DestinoRow({
@@ -44,6 +46,7 @@ export function ItemDestinoDetail({ item }: { item: OrderItemWithRelations }) {
   const nome = item.nome_recebedor.trim() || "—";
   const kind = giftKindLabel(item);
   const isGift = Boolean(kind);
+  const productTipo = item.products?.tipo;
 
   return (
     <div className="space-y-3">
@@ -67,15 +70,25 @@ export function ItemDestinoDetail({ item }: { item: OrderItemWithRelations }) {
       {item.products?.nome && (
         <div className="flex items-start gap-3 border-t border-border/60 pt-3">
           <span
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-muted"
+            className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+              productTipo
+                ? PRODUCT_KIND_BADGE_CLASS[productTipo]
+                : "bg-neutral-100 text-muted"
+            }`}
             aria-hidden
           >
             <Package className="h-4 w-4" strokeWidth={2.25} />
           </span>
           <div className="min-w-0 pt-0.5">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
-              Item
-            </p>
+            <div className="mb-1">
+              {productTipo ? (
+                <ProductKindBadge kind={productTipo} />
+              ) : (
+                <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                  Item
+                </p>
+              )}
+            </div>
             <p className="text-sm font-semibold text-foreground">
               {item.products.nome}
               <span className="font-medium text-muted">

@@ -1,6 +1,8 @@
-import { PRODUCT_KIND_LABELS } from "@/lib/product-kind";
+import {
+  PRODUCT_KIND_LABELS,
+  productKindBadgeClassName,
+} from "@/lib/product-kind";
 import type { ProductKind } from "@/types/database";
-import { StoreBadge } from "@/components/vitrine/store-badge";
 
 export function ProductKindBadge({
   kind,
@@ -9,7 +11,10 @@ export function ProductKindBadge({
   kind: ProductKind;
   variant?: "secondary" | "outline";
 }) {
+  const style = variant === "outline" ? "outline" : "filled";
   return (
-    <StoreBadge variant={variant}>{PRODUCT_KIND_LABELS[kind]}</StoreBadge>
+    <span className={productKindBadgeClassName(kind, style)}>
+      {PRODUCT_KIND_LABELS[kind]}
+    </span>
   );
 }
