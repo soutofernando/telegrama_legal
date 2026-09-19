@@ -5,6 +5,7 @@ import type { PublicProduct } from "@/types/database";
 import { ProductImage } from "@/components/vitrine/product-image";
 import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { ProductPromoBadges } from "@/components/vitrine/product-promo-badges";
+import { ProductGridBadge } from "@/components/vitrine/product-grid-badge";
 import { ProductPrice } from "@/components/vitrine/product-price";
 import { AddToCartButton } from "@/components/vitrine/add-to-cart-button";
 
@@ -23,6 +24,7 @@ export function ProductCard({
   maxQuantity,
   className,
   highlightBadge,
+  featuredInGrid,
 }: {
   product: PublicProduct;
   variant?: ProductCardVariant;
@@ -30,6 +32,7 @@ export function ProductCard({
   maxQuantity?: number;
   className?: string;
   highlightBadge?: "bestseller" | "new";
+  featuredInGrid?: boolean;
 }) {
   const isCarousel = variant !== "grid";
   const isCompact = variant === "compact" || isCarousel;
@@ -67,23 +70,21 @@ export function ProductCard({
             </div>
           </div>
           {!product.disponivel && (
-            <span className="badge-esgotado absolute left-2 top-2 text-[10px]">
+            <span className="badge-esgotado absolute left-2 top-2 z-[1] text-[10px]">
               Esgotado
             </span>
           )}
-          {product.disponivel && (
-            <span className="absolute left-2 top-2 flex max-w-[calc(100%-0.5rem)] flex-col gap-1">
-              {highlightBadge === "bestseller" && (
-                <span className="rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-card">
-                  Mais vendido
-                </span>
-              )}
-              {highlightBadge === "new" && (
-                <span className="rounded-md border border-primary bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
-                  Novo
-                </span>
-              )}
-              {!isGrid && <ProductKindBadge kind={product.tipo} />}
+          {product.disponivel && isGrid && (
+            <ProductGridBadge
+              product={product}
+              featuredInGrid={featuredInGrid}
+              highlightBadge={highlightBadge}
+              maxQuantity={maxQuantity}
+            />
+          )}
+          {product.disponivel && !isGrid && (
+            <span className="absolute left-2 top-2 z-[1] flex max-w-[calc(100%-1rem)] flex-wrap gap-1">
+              <ProductKindBadge kind={product.tipo} />
               <ProductPromoBadges product={product} />
             </span>
           )}

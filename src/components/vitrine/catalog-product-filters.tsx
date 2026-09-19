@@ -8,6 +8,7 @@ const FILTER_CHIP =
 
 const SORT_OPTIONS: { id: CatalogSortId; label: string }[] = [
   { id: "default", label: "Relevância" },
+  { id: "bestsellers", label: "Mais vendidos" },
   { id: "price-asc", label: "Menor preço" },
   { id: "price-desc", label: "Maior preço" },
 ];

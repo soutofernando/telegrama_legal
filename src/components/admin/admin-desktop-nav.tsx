@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   LogOut,
   MapPin,
+  Settings,
   ShoppingBag,
   Users,
   Wallet,
@@ -24,6 +25,7 @@ const DESKTOP_NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/financeiro": Wallet,
   "/admin/horarios": Clock,
   "/admin/itinerario": MapPin,
+  "/admin/configuracoes": Settings,
 };
 
 export function AdminDesktopNav() {

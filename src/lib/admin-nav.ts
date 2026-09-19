@@ -23,6 +23,11 @@ export const ADMIN_MORE_LINKS = [
     label: "Atendimento",
     desc: "Reclamações e feedbacks",
   },
+  {
+    href: "/admin/configuracoes",
+    label: "Configurações",
+    desc: "WhatsApp e mensagem do checkout",
+  },
   { href: "/", label: "Abrir loja", desc: "Vitrine pública" },
 ] as const;
 

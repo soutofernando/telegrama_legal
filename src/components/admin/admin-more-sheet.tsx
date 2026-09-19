@@ -5,6 +5,7 @@ import {
   ExternalLink,
   LogOut,
   MapPin,
+  Settings,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -17,6 +18,7 @@ const MORE_ICONS: Record<string, LucideIcon> = {
   "/admin/financeiro": Wallet,
   "/admin/horarios": Clock,
   "/admin/itinerario": MapPin,
+  "/admin/configuracoes": Settings,
   "/": ExternalLink,
 };
 

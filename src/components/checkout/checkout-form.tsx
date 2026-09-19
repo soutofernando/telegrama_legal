@@ -6,8 +6,7 @@ import { useCart } from "@/context/cart-context";
 import { placeOrderAction } from "@/app/actions/checkout";
 import { formatCurrency } from "@/lib/format";
 import { TeamSelect } from "@/components/ui/team-select";
-import { WHATSAPP_NUMBER } from "@/lib/constants";
-import { cartLinePricing, lineTotal } from "@/lib/product-pricing";
+import { buildWhatsAppOrderUrl } from "@/lib/whatsapp-settings";
 import {
   FULFILLMENT_LABELS,
   PICKUP_INSTRUCTIONS,
@@ -20,34 +19,23 @@ import {
   type LineUnitRecipient,
 } from "@/lib/checkout-recipients";
 import { OrderItemsRecipients } from "@/components/checkout/order-items-recipients";
+import { PixCheckoutPanel } from "@/components/checkout/pix-checkout-panel";
+import { isPixConfigured } from "@/lib/pix-settings";
 import type {
-  CartLine,
+  AppSettings,
   DeliverySlot,
   FulfillmentType,
   Team,
 } from "@/types/database";
 
-function buildWhatsAppUrl(
-  nome: string,
-  items: CartLine[],
-  total: number,
-) {
-  const lines = items.map(
-    (i) =>
-      `• ${i.nome} x${i.quantidade} — ${formatCurrency(lineTotal(i.quantidade, cartLinePricing(i)))}`,
-  );
-  const text = encodeURIComponent(
-    `Olá! Sou ${nome}. Acabei de fazer um pedido no Telegrama Legal:\n\n${lines.join("\n")}\n\nTotal: ${formatCurrency(total)}\n\nEnvio o comprovante em anexo.`,
-  );
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
-}
-
 export function CheckoutForm({
   teams,
   slots,
+  whatsapp,
 }: {
   teams: Team[];
   slots: DeliverySlot[];
+  whatsapp: AppSettings;
 }) {
   const router = useRouter();
   const { items, subtotal, clearCart } = useCart();
@@ -64,10 +52,15 @@ export function CheckoutForm({
   const [lineUnits, setLineUnits] = useState<
     Record<string, LineUnitRecipient[]>
   >({});
+  const [pixPaid, setPixPaid] = useState(false);
 
   useEffect(() => {
     setLineUnits((prev) => syncLineUnits(items, prev));
   }, [items]);
+
+  useEffect(() => {
+    if (payment !== "whatsapp") setPixPaid(false);
+  }, [payment]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +89,19 @@ export function CheckoutForm({
       return;
     }
 
+    if (payment === "whatsapp") {
+      if (!isPixConfigured(whatsapp)) {
+        setError(
+          "Pagamento por PIX ainda não está configurado. Escolha outra forma de pagamento.",
+        );
+        return;
+      }
+      if (!pixPaid) {
+        setError("Marque que você já realizou o pagamento via PIX.");
+        return;
+      }
+    }
+
     startTransition(async () => {
       const result = await placeOrderAction({
         nomeComprador: nome,
@@ -113,9 +119,15 @@ export function CheckoutForm({
 
       clearCart();
 
-      if (payment === "whatsapp" && WHATSAPP_NUMBER) {
-        const url = buildWhatsAppUrl(nome, items, subtotal);
-        window.open(url, "_blank", "noopener,noreferrer");
+      if (payment === "whatsapp") {
+        const url = buildWhatsAppOrderUrl(
+          whatsapp.whatsapp_number,
+          whatsapp.whatsapp_message_template,
+          nome,
+          items,
+          subtotal,
+        );
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
       }
 
       router.push(`/pedido-confirmado?id=${result.orderId}`);
@@ -258,7 +270,8 @@ export function CheckoutForm({
               <span className="text-sm">
                 <span className="font-semibold text-neutral-900">Pagar agora</span>
                 <span className="mt-0.5 block text-neutral-500">
-                  Você será direcionado ao WhatsApp para enviar o comprovante.
+                  Pague com PIX (QR ou copia e cola) e depois envie o comprovante
+                  no WhatsApp.
                 </span>
               </span>
             </label>
@@ -286,6 +299,15 @@ export function CheckoutForm({
             </label>
           </div>
         </div>
+
+        {payment === "whatsapp" && (
+          <PixCheckoutPanel
+            settings={whatsapp}
+            amount={subtotal}
+            confirmed={pixPaid}
+            onConfirmedChange={setPixPaid}
+          />
+        )}
       </div>
 
       {error && (
@@ -295,7 +317,11 @@ export function CheckoutForm({
       )}
 
       <button type="submit" disabled={pending} className="btn-primary w-full">
-        {pending ? "Confirmando…" : "Confirmar pedido"}
+        {pending
+          ? "Confirmando…"
+          : payment === "whatsapp"
+            ? "Confirmar pedido e enviar comprovante"
+            : "Confirmar pedido"}
       </button>
     </form>
   );

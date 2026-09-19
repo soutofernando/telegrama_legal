@@ -45,7 +45,10 @@ export function AdminMobileNav() {
   const moreActive =
     pathname.startsWith("/admin/financeiro") ||
     pathname.startsWith("/admin/horarios") ||
-    pathname.startsWith("/admin/itinerario");
+    pathname.startsWith("/admin/itinerario") ||
+    pathname.startsWith("/admin/configuracoes") ||
+    pathname.startsWith("/admin/atendimento") ||
+    pathname.startsWith("/admin/serenatas");
 
   return (
     <>

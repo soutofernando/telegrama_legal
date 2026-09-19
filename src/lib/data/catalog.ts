@@ -1,15 +1,46 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PublicProduct } from "@/types/database";
 
+type ProductRow = {
+  id: string;
+  nome: string;
+  descricao: string;
+  preco: number;
+  preco_promocional: number | null;
+  promo_combo_quantidade: number | null;
+  promo_combo_preco: number | null;
+  imagem_url: string;
+  tipo: PublicProduct["tipo"];
+  estoque: number;
+};
+
+function toPublicProduct(row: ProductRow): PublicProduct {
+  return {
+    id: row.id,
+    nome: row.nome,
+    descricao: row.descricao,
+    preco: row.preco,
+    preco_promocional: row.preco_promocional,
+    promo_combo_quantidade: row.promo_combo_quantidade,
+    promo_combo_preco: row.promo_combo_preco,
+    imagem_url: row.imagem_url,
+    tipo: row.tipo,
+    disponivel: row.estoque > 0,
+  };
+}
+
+/** Ordem de cadastro; usa `products` para não depender de colunas da view pública. */
 export async function getPublicProducts(): Promise<PublicProduct[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("public_products")
-    .select("*")
-    .order("nome");
+    .from("products")
+    .select(
+      "id, nome, descricao, preco, preco_promocional, promo_combo_quantidade, promo_combo_preco, imagem_url, tipo, estoque",
+    )
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as PublicProduct[];
+  return (data ?? []).map((row) => toPublicProduct(row as ProductRow));
 }
 
 export async function getPublicProductById(

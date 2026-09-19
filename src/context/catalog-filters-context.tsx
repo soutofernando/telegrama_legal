@@ -8,7 +8,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { CatalogCategoryId, CatalogSortId } from "@/lib/catalog-helpers";
+import type {
+  CatalogCategoryId,
+  CatalogPriceRangeId,
+  CatalogSortId,
+} from "@/lib/catalog-helpers";
 
 type CatalogFiltersState = {
   query: string;
@@ -17,6 +21,12 @@ type CatalogFiltersState = {
   setCategory: (value: CatalogCategoryId) => void;
   onlyWithDiscount: boolean;
   setOnlyWithDiscount: (value: boolean) => void;
+  onlyAvailable: boolean;
+  setOnlyAvailable: (value: boolean) => void;
+  onlyBestSellers: boolean;
+  setOnlyBestSellers: (value: boolean) => void;
+  priceRange: CatalogPriceRangeId;
+  setPriceRange: (value: CatalogPriceRangeId) => void;
   sort: CatalogSortId;
   setSort: (value: CatalogSortId) => void;
   resetFilters: () => void;
@@ -28,12 +38,18 @@ export function CatalogFiltersProvider({ children }: { children: ReactNode }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CatalogCategoryId>("all");
   const [onlyWithDiscount, setOnlyWithDiscount] = useState(false);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [onlyBestSellers, setOnlyBestSellers] = useState(false);
+  const [priceRange, setPriceRange] = useState<CatalogPriceRangeId>("all");
   const [sort, setSort] = useState<CatalogSortId>("default");
 
   const resetFilters = useCallback(() => {
     setQuery("");
     setCategory("all");
     setOnlyWithDiscount(false);
+    setOnlyAvailable(false);
+    setOnlyBestSellers(false);
+    setPriceRange("all");
     setSort("default");
   }, []);
 
@@ -45,6 +61,12 @@ export function CatalogFiltersProvider({ children }: { children: ReactNode }) {
       setCategory,
       onlyWithDiscount,
       setOnlyWithDiscount,
+      onlyAvailable,
+      setOnlyAvailable,
+      onlyBestSellers,
+      setOnlyBestSellers,
+      priceRange,
+      setPriceRange,
       sort,
       setSort,
       resetFilters,
@@ -53,6 +75,9 @@ export function CatalogFiltersProvider({ children }: { children: ReactNode }) {
       query,
       category,
       onlyWithDiscount,
+      onlyAvailable,
+      onlyBestSellers,
+      priceRange,
       sort,
       resetFilters,
     ],

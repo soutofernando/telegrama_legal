@@ -8,6 +8,15 @@ export interface Team {
   created_at?: string;
 }
 
+export interface AppSettings {
+  whatsapp_number: string;
+  whatsapp_message_template: string;
+  pix_key: string;
+  pix_merchant_name: string;
+  pix_merchant_city: string;
+  updated_at?: string;
+}
+
 export interface DeliverySlot {
   id: string;
   horario: string;
@@ -83,7 +92,7 @@ export interface OrderItem {
 
 export interface OrderItemWithRelations extends OrderItem {
   teams?: { nome: string };
-  delivery_slots?: { horario: string };
+  delivery_slots?: { horario: string; sort_order?: number };
   products?: { nome: string; tipo?: ProductKind };
 }
 

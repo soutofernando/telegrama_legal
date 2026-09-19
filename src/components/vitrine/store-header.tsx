@@ -8,6 +8,7 @@ import { useOptionalCatalogFilters } from "@/context/catalog-filters-context";
 import { SITE_NAME } from "@/lib/constants";
 import { CatalogSearch } from "@/components/vitrine/catalog-search";
 import type { BestSellerItem } from "@/lib/data/best-sellers";
+import { ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const EMPTY_BEST_SELLERS: BestSellerItem[] = [];
@@ -94,7 +95,8 @@ export function StoreHeader() {
               href="/carrinho"
               className="touch-target relative inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-semibold transition-colors hover:border-primary/25 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:px-4"
             >
-              Carrinho
+              <ShoppingCart className="h-[1.125rem] w-[1.125rem] shrink-0" strokeWidth={2} aria-hidden />
+              <span>Carrinho</span>
               {totalItems > 0 && (
                 <span
                   data-cart-badge

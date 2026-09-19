@@ -1,3 +1,4 @@
+import { getAppSettings } from "@/lib/data/app-settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CheckoutForm } from "@/components/checkout/checkout-form";
 import { CheckoutStepper } from "@/components/vitrine/checkout-stepper";
@@ -7,18 +8,20 @@ export const revalidate = 300;
 
 async function getCheckoutData() {
   const supabase = createAdminClient();
-  const [teamsRes, slotsRes] = await Promise.all([
+  const [teamsRes, slotsRes, whatsappSettings] = await Promise.all([
     supabase.from("teams").select("*").order("nome"),
     supabase.from("delivery_slots").select("*").order("sort_order"),
+    getAppSettings(),
   ]);
   return {
     teams: (teamsRes.data ?? []) as Team[],
     slots: (slotsRes.data ?? []) as DeliverySlot[],
+    whatsappSettings,
   };
 }
 
 export default async function CheckoutPage() {
-  const { teams, slots } = await getCheckoutData();
+  const { teams, slots, whatsappSettings } = await getCheckoutData();
 
   return (
     <div className="mx-auto max-w-lg px-5 py-6 sm:py-8">
@@ -30,7 +33,7 @@ export default async function CheckoutPage() {
         Preencha seus dados para concluir o pedido.
       </p>
       <div className="mt-6">
-        <CheckoutForm teams={teams} slots={slots} />
+        <CheckoutForm teams={teams} slots={slots} whatsapp={whatsappSettings} />
       </div>
     </div>
   );

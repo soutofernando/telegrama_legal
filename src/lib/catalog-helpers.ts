@@ -6,12 +6,19 @@ import {
 import { productKindToCategory } from "@/lib/product-kind";
 import type { PublicProduct } from "@/types/database";
 
-export type CatalogSortId = "default" | "price-asc" | "price-desc";
+export type CatalogSortId =
+  | "default"
+  | "bestsellers"
+  | "price-asc"
+  | "price-desc";
+
+export type CatalogPriceRangeId = "all" | "under-15" | "15-30" | "over-30";
 
 export type CatalogCategoryId =
   | "all"
-  | "lembrancas"
-  | "telegramas"
+  | "serenatas"
+  | "prendas"
+  | "tirantes"
   | "adesivos"
   | "botoes"
   | "especiais";
@@ -31,16 +38,22 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
     description: "Tudo no catálogo",
   },
   {
-    id: "lembrancas",
-    label: "Lembranças",
-    emoji: "🎁",
-    description: "Prendas para presentear",
+    id: "serenatas",
+    label: "Serenatas",
+    emoji: "🎵",
+    description: "Música e mensagem ao vivo",
   },
   {
-    id: "telegramas",
-    label: "Telegramas",
-    emoji: "💌",
-    description: "Mensagens especiais",
+    id: "prendas",
+    label: "Prendas",
+    emoji: "🎁",
+    description: "Presentes para presentear",
+  },
+  {
+    id: "tirantes",
+    label: "Tirantes",
+    emoji: "🪪",
+    description: "Crachás e cordões",
   },
   {
     id: "adesivos",
@@ -54,16 +67,14 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
     emoji: "📌",
     description: "Pins e bottons",
   },
-  {
-    id: "especiais",
-    label: "Especiais",
-    emoji: "💙",
-    description: "Edição do encontro",
-  },
 ];
 
 const CATEGORY_RULES: { id: CatalogCategoryId; patterns: RegExp[] }[] = [
-  { id: "telegramas", patterns: [/telegrama/i, /serenata/i] },
+  { id: "serenatas", patterns: [/serenata/i] },
+  {
+    id: "tirantes",
+    patterns: [/tirante/i, /crachá/i, /credencial/i, /telegrama/i],
+  },
   { id: "adesivos", patterns: [/adesivo/i, /sticker/i] },
   { id: "botoes", patterns: [/botton/i, /botão/i, /pin\b/i] },
   {
@@ -71,6 +82,18 @@ const CATEGORY_RULES: { id: CatalogCategoryId; patterns: RegExp[] }[] = [
     patterns: [/especial/i, /edição/i, /premium/i, /kit/i],
   },
 ];
+
+export function buildCatalogOrderMap(
+  products: PublicProduct[],
+): Map<string, number> {
+  return new Map(products.map((p, index) => [p.id, index]));
+}
+
+export function buildBestSellerRankMap(
+  bestSellerIds: string[],
+): Map<string, number> {
+  return new Map(bestSellerIds.map((id, index) => [id, index]));
+}
 
 export function inferProductCategory(product: PublicProduct): CatalogCategoryId {
   if (product.tipo) {
@@ -80,7 +103,7 @@ export function inferProductCategory(product: PublicProduct): CatalogCategoryId 
   for (const rule of CATEGORY_RULES) {
     if (rule.patterns.some((p) => p.test(hay))) return rule.id;
   }
-  return "lembrancas";
+  return "prendas";
 }
 
 export function filterByCategory(
@@ -111,34 +134,134 @@ export function filterByPromotion(
   return products.filter((p) => hasPromotion(pricingFromProduct(p)));
 }
 
+export function filterByAvailability(
+  products: PublicProduct[],
+  onlyAvailable: boolean,
+): PublicProduct[] {
+  if (!onlyAvailable) return products;
+  return products.filter((p) => p.disponivel);
+}
+
+export function filterByBestSellers(
+  products: PublicProduct[],
+  onlyBestSellers: boolean,
+  bestSellerIds: Set<string>,
+): PublicProduct[] {
+  if (!onlyBestSellers) return products;
+  return products.filter((p) => bestSellerIds.has(p.id));
+}
+
+export function filterByPriceRange(
+  products: PublicProduct[],
+  priceRange: CatalogPriceRangeId,
+): PublicProduct[] {
+  if (priceRange === "all") return products;
+  return products.filter((p) => {
+    const price = unitSalePrice(pricingFromProduct(p));
+    if (priceRange === "under-15") return price < 15;
+    if (priceRange === "15-30") return price >= 15 && price <= 30;
+    return price > 30;
+  });
+}
+
+export type CatalogSortContext = {
+  catalogOrder: Map<string, number>;
+  bestSellerRank: Map<string, number>;
+  featuredProductId: string | null;
+};
+
+function catalogIndex(order: Map<string, number>, id: string): number {
+  return order.get(id) ?? Number.MAX_SAFE_INTEGER;
+}
+
 export function sortCatalogProducts(
   products: PublicProduct[],
   sort: CatalogSortId,
+  context?: CatalogSortContext,
 ): PublicProduct[] {
-  if (sort === "default") return products;
   const copy = [...products];
+  const order = context?.catalogOrder ?? new Map<string, number>();
+  const bestSellerRank = context?.bestSellerRank ?? new Map<string, number>();
+  const featuredId = context?.featuredProductId ?? null;
+
+  if (sort === "price-asc" || sort === "price-desc") {
+    copy.sort((a, b) => {
+      const pa = unitSalePrice(pricingFromProduct(a));
+      const pb = unitSalePrice(pricingFromProduct(b));
+      return sort === "price-asc" ? pa - pb : pb - pa;
+    });
+    return copy;
+  }
+
+  if (sort === "bestsellers") {
+    copy.sort((a, b) => {
+      const ra = bestSellerRank.has(a.id)
+        ? bestSellerRank.get(a.id)!
+        : Number.MAX_SAFE_INTEGER;
+      const rb = bestSellerRank.has(b.id)
+        ? bestSellerRank.get(b.id)!
+        : Number.MAX_SAFE_INTEGER;
+      if (ra !== rb) return ra - rb;
+      return catalogIndex(order, a.id) - catalogIndex(order, b.id);
+    });
+    return copy;
+  }
+
   copy.sort((a, b) => {
-    const pa = unitSalePrice(pricingFromProduct(a));
-    const pb = unitSalePrice(pricingFromProduct(b));
-    return sort === "price-asc" ? pa - pb : pb - pa;
+    const tier = (p: PublicProduct): [number, number, number] => {
+      if (featuredId && p.id === featuredId) return [0, 0, catalogIndex(order, p.id)];
+      if (bestSellerRank.has(p.id)) {
+        return [1, bestSellerRank.get(p.id)!, catalogIndex(order, p.id)];
+      }
+      if (hasPromotion(pricingFromProduct(p))) {
+        return [2, 0, catalogIndex(order, p.id)];
+      }
+      return [3, 0, catalogIndex(order, p.id)];
+    };
+    const ta = tier(a);
+    const tb = tier(b);
+    if (ta[0] !== tb[0]) return ta[0] - tb[0];
+    if (ta[1] !== tb[1]) return ta[1] - tb[1];
+    return ta[2] - tb[2];
   });
   return copy;
+}
+
+export function countCatalogPanelFilters(options: {
+  onlyWithDiscount: boolean;
+  onlyAvailable: boolean;
+  onlyBestSellers: boolean;
+  priceRange: CatalogPriceRangeId;
+}): number {
+  let count = 0;
+  if (options.onlyWithDiscount) count += 1;
+  if (options.onlyAvailable) count += 1;
+  if (options.onlyBestSellers) count += 1;
+  if (options.priceRange !== "all") count += 1;
+  return count;
 }
 
 export function hasCatalogFiltersActive(options: {
   query: string;
   category: CatalogCategoryId;
   onlyWithDiscount: boolean;
+  onlyAvailable: boolean;
+  onlyBestSellers: boolean;
+  priceRange: CatalogPriceRangeId;
   sort: CatalogSortId;
 }): boolean {
   return (
     options.query.trim().length > 0 ||
     options.category !== "all" ||
     options.onlyWithDiscount ||
+    options.onlyAvailable ||
+    options.onlyBestSellers ||
+    options.priceRange !== "all" ||
     options.sort !== "default"
   );
 }
 
+/** Produto em destaque (patrocinado): primeiro disponível na ordem de cadastro. */
 export function pickFeaturedProduct(
   products: PublicProduct[],
 ): PublicProduct | null {
@@ -170,7 +293,7 @@ export function splitProductSections(products: PublicProduct[]) {
     popular: rest.slice(5, 10).length
       ? rest.slice(5, 10)
       : rest.slice(0, Math.min(5, rest.length)),
-    gifts: rest.filter((p) => inferProductCategory(p) === "lembrancas").slice(0, 6),
+    gifts: rest.filter((p) => inferProductCategory(p) === "prendas").slice(0, 6),
     fresh:
       rest.length > 3 ? [...rest].reverse().slice(0, 6) : rest.slice(0, 6),
     all: products,

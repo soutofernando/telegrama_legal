@@ -2,17 +2,19 @@ import type { CatalogCategoryId } from "@/lib/catalog-helpers";
 import {
   Gift,
   Heart,
-  Mail,
+  Music,
   Pin,
   LayoutGrid,
   Star,
+  Tag,
   type LucideIcon,
 } from "lucide-react";
 
 const ICONS: Record<CatalogCategoryId, LucideIcon> = {
   all: LayoutGrid,
-  lembrancas: Gift,
-  telegramas: Mail,
+  serenatas: Music,
+  prendas: Gift,
+  tirantes: Tag,
   adesivos: Star,
   botoes: Pin,
   especiais: Heart,

@@ -20,9 +20,9 @@ export const PRODUCT_KIND_LABELS: Record<ProductKind, string> = {
 const KIND_TO_CATEGORY: Record<ProductKind, CatalogCategoryId> = {
   botton: "botoes",
   adesivo: "adesivos",
-  serenata: "telegramas",
-  prenda: "lembrancas",
-  tirante: "lembrancas",
+  serenata: "serenatas",
+  prenda: "prendas",
+  tirante: "tirantes",
 };
 
 export function productKindToCategory(kind: ProductKind): CatalogCategoryId {

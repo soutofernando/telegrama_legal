@@ -9,6 +9,9 @@ import {
 export const revalidate = 60;
 
 function parseCategory(cat?: string): CatalogCategoryId {
+  if (cat === "lembrancas") return "prendas";
+  if (cat === "telegramas") return "tirantes";
+  if (cat === "especiais") return "all";
   if (cat && CATALOG_CATEGORIES.some((c) => c.id === cat)) {
     return cat as CatalogCategoryId;
   }

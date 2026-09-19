@@ -1,16 +1,16 @@
 "use client";
 
-import { Check, Gift } from "lucide-react";
+import { CalendarClock, Check, Gift } from "lucide-react";
 import { useMemo, useState } from "react";
-import { setOrderItemStatus } from "@/app/actions/admin";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DeliveryTime } from "@/components/ui/delivery-time";
+import { formatDateTime } from "@/lib/format";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import type { DeliveryStatus, OrderItemWithRelations } from "@/types/database";
 
 const columns: {
@@ -49,97 +49,48 @@ const STATUS_OPTIONS: { value: DeliveryStatus; label: string }[] = [
   { value: "delivered", label: "Entregue" },
 ];
 
-function KanbanCard({
-  item,
-  loading,
-  onStatusChange,
-}: {
-  item: OrderItemWithRelations;
-  loading: boolean;
-  onStatusChange: (id: string, status: DeliveryStatus) => void;
-}) {
+function KanbanCard({ item }: { item: OrderItemWithRelations }) {
   const delivered = item.status === "delivered";
-  const [statusOpen, setStatusOpen] = useState(false);
 
   return (
-    <>
-      <Card
-        className={`border border-border/80 ${delivered ? "opacity-80" : ""}`}
-        padding="sm"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <ItemDestinoLabel
-              item={item}
-              className={`text-base font-bold leading-snug ${delivered ? "text-muted line-through decoration-success/50" : "text-foreground"}`}
-            />
-          </div>
-          {delivered && (
-            <span
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success-soft text-success"
-              aria-label="Entregue"
-            >
-              <Check className="h-4 w-4" strokeWidth={2.5} />
-            </span>
-          )}
+    <Card
+      className={`border border-border/80 ${delivered ? "opacity-80" : ""}`}
+      padding="sm"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <ItemDestinoLabel
+            item={item}
+            className={`text-base font-bold leading-snug ${delivered ? "text-muted line-through decoration-success/50" : "text-foreground"}`}
+          />
         </div>
-        <p className="mt-3 text-sm font-semibold text-foreground">
-          {item.products?.nome ?? "—"}
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-          <span>{item.quantidade} un.</span>
-          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-700">
-            {FULFILLMENT_LABELS[item.fulfillment_type ?? "delivery"]}
-          </span>
-          <DeliveryTime horario={item.delivery_slots?.horario} />
-        </div>
-        <div className="mt-4 flex flex-col gap-2">
-          {!delivered && (
-            <Button
-              variant="soft"
-              disabled={loading}
-              onClick={() => onStatusChange(item.id, "delivered")}
-            >
-              {loading ? "Salvando…" : "Marcar como entregue"}
-            </Button>
-          )}
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => setStatusOpen(true)}
-            className="min-h-10 text-sm font-semibold text-muted underline-offset-2 hover:text-primary hover:underline"
+        {delivered && (
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success-soft text-success"
+            aria-label="Entregue"
           >
-            Alterar status
-          </button>
-        </div>
-      </Card>
-      <BottomSheet
-        open={statusOpen}
-        onClose={() => setStatusOpen(false)}
-        title="Alterar status"
-      >
-        <div className="space-y-2">
-          {STATUS_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              disabled={loading || item.status === opt.value}
-              onClick={() => {
-                onStatusChange(item.id, opt.value);
-                setStatusOpen(false);
-              }}
-              className={`flex min-h-12 w-full items-center rounded-2xl px-4 text-left text-base font-semibold transition-colors ${
-                item.status === opt.value
-                  ? "bg-primary-soft text-primary"
-                  : "bg-background text-foreground active:bg-primary-soft"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </BottomSheet>
-    </>
+            <Check className="h-4 w-4" strokeWidth={2.5} />
+          </span>
+        )}
+      </div>
+      <p className="mt-3 text-sm font-semibold text-foreground">
+        {item.products?.nome ?? "—"}
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+        <span>{item.quantidade} un.</span>
+        <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+          {FULFILLMENT_LABELS[item.fulfillment_type ?? "delivery"]}
+        </span>
+        <DeliveryTime horario={item.delivery_slots?.horario} />
+      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted">
+        <CalendarClock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span>
+          Compra:{" "}
+          <time dateTime={item.criado_em}>{formatDateTime(item.criado_em)}</time>
+        </span>
+      </p>
+    </Card>
   );
 }
 
@@ -156,8 +107,6 @@ export function ItemsKanban({
   const [slotFilter, setSlotFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "">("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [dragOverCol, setDragOverCol] = useState<DeliveryStatus | null>(null);
 
   const activeFilterCount = [teamFilter, slotFilter, statusFilter].filter(
     Boolean,
@@ -190,22 +139,6 @@ export function ItemsKanban({
     return map;
   }, [filtered]);
 
-  const changeStatus = async (id: string, status: DeliveryStatus) => {
-    setLoadingId(id);
-    try {
-      await setOrderItemStatus(id, status);
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const onDrop = async (status: DeliveryStatus, itemId: string) => {
-    setDragOverCol(null);
-    const item = items.find((i) => i.id === itemId);
-    if (!item || item.status === status) return;
-    await changeStatus(itemId, status);
-  };
-
   if (items.length === 0) {
     return (
       <EmptyState
@@ -218,6 +151,11 @@ export function ItemsKanban({
 
   return (
     <div className="space-y-4">
+      <p className="text-sm text-muted">
+        Visão geral em tempo real. Para entregar, use o{" "}
+        <span className="font-semibold text-foreground">Itinerário</span>.
+      </p>
+
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -345,17 +283,7 @@ export function ItemsKanban({
         {columns.map((col) => (
           <section
             key={col.id}
-            className={`flex w-[min(88vw,20rem)] shrink-0 snap-center flex-col rounded-2xl p-3 md:w-auto ${col.columnBg} ${dragOverCol === col.id ? "ring-2 ring-primary/40" : ""}`}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOverCol(col.id);
-            }}
-            onDragLeave={() => setDragOverCol(null)}
-            onDrop={(e) => {
-              e.preventDefault();
-              const id = e.dataTransfer.getData("text/plain");
-              if (id) onDrop(col.id, id);
-            }}
+            className={`flex w-[min(88vw,20rem)] shrink-0 snap-center flex-col rounded-2xl p-3 md:w-auto ${col.columnBg}`}
           >
             <header className="mb-3 flex items-center gap-2 px-1">
               <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
@@ -364,21 +292,7 @@ export function ItemsKanban({
             </header>
             <div className="flex max-h-[min(70vh,36rem)] flex-col gap-3 overflow-y-auto pr-0.5">
               {byColumn[col.id].map((item) => (
-                <div
-                  key={item.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", item.id);
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                  className="touch-manipulation"
-                >
-                  <KanbanCard
-                    item={item}
-                    loading={loadingId === item.id}
-                    onStatusChange={changeStatus}
-                  />
-                </div>
+                <KanbanCard key={item.id} item={item} />
               ))}
               {byColumn[col.id].length === 0 && (
                 <p className="rounded-xl bg-card/70 px-3 py-8 text-center text-sm text-muted">

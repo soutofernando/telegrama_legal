@@ -10,6 +10,7 @@ import { STORAGE_BUCKET } from "@/lib/constants";
 import { productImagePathFromUrl } from "@/lib/product-storage";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { normalizeWhatsAppNumber } from "@/lib/whatsapp-settings";
 import type { ProductKind } from "@/types/database";
 async function requireAuth() {
   const supabase = await createClient();
@@ -411,6 +412,22 @@ export async function setOrderItemStatus(
   revalidatePath("/admin/itinerario");
 }
 
+export async function setOrderItemsStatus(
+  ids: string[],
+  status: "pending" | "in_progress" | "delivered",
+) {
+  if (ids.length === 0) return;
+  await requireAuth();
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("set_order_items_status", {
+    p_ids: ids,
+    p_status: status,
+  });
+  if (error) throw error;
+  revalidatePath("/admin/itens");
+  revalidatePath("/admin/itinerario");
+}
+
 export async function markGroupDelivered(
   equipeId: string,
   deliverySlotId: string,
@@ -424,6 +441,29 @@ export async function markGroupDelivered(
   if (error) throw error;
   revalidatePath("/admin/itens");
   revalidatePath("/admin/itinerario");
+}
+
+export async function saveAppSettings(data: {
+  whatsapp_number: string;
+  whatsapp_message_template: string;
+  pix_key: string;
+  pix_merchant_name: string;
+  pix_merchant_city: string;
+}) {
+  await requireAuth();
+  const admin = createAdminClient();
+  const { error } = await admin.from("app_settings").upsert({
+    id: "default",
+    whatsapp_number: normalizeWhatsAppNumber(data.whatsapp_number),
+    whatsapp_message_template: data.whatsapp_message_template.trim(),
+    pix_key: data.pix_key.trim(),
+    pix_merchant_name: data.pix_merchant_name.trim(),
+    pix_merchant_city: data.pix_merchant_city.trim(),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+  revalidatePath("/checkout");
+  revalidatePath("/admin/configuracoes");
 }
 
 export async function signOut() {
