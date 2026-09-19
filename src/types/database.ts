@@ -86,6 +86,7 @@ export interface OrderItem {
   delivery_slot_id: string;
   fulfillment_type?: FulfillmentType;
   eh_presente: boolean;
+  serenata_song_id?: string | null;
   status: DeliveryStatus;
   entregador_nome?: string | null;
   valor_linha?: number | null;
@@ -96,6 +97,7 @@ export interface OrderItemWithRelations extends OrderItem {
   teams?: { nome: string };
   delivery_slots?: { horario: string; sort_order?: number };
   products?: { nome: string; tipo?: ProductKind };
+  serenata_songs?: { titulo: string } | null;
   orders?: Pick<Order, "nome_comprador" | "forma_pagamento">;
 }
 

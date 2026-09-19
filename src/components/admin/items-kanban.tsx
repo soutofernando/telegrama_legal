@@ -13,6 +13,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls";
 import { usePaginatedItems } from "@/hooks/use-pagination";
 import { KANBAN_PAGE_SIZE } from "@/lib/pagination";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
+import { formatOrderItemProductLine } from "@/lib/order-item-display";
 import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { OrderItemDetailOverlay } from "@/components/admin/order-item-detail-overlay";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -80,6 +81,7 @@ function itemMatchesNameFilter(
     item.nome_recebedor,
     item.teams?.nome,
     item.products?.nome,
+    item.serenata_songs?.titulo,
     item.entregador_nome,
   ]
     .filter(Boolean)
@@ -123,7 +125,7 @@ function KanbanCard({
           <ProductKindBadge kind={item.products.tipo} />
         )}
         <p className="text-sm font-semibold text-foreground">
-          {item.products?.nome ?? "—"}
+          {formatOrderItemProductLine(item, false)}
         </p>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">

@@ -25,11 +25,9 @@ import {
   sortSlots,
 } from "@/lib/itinerary";
 import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
+import { ORDER_ITEMS_ADMIN_SELECT } from "@/lib/order-items-select";
 import { createClient } from "@/lib/supabase/client";
 import type { DeliverySlot, OrderItemWithRelations } from "@/types/database";
-
-const ORDER_ITEMS_SELECT =
-  "*, teams!order_items_equipe_destino_id_fkey(nome), delivery_slots(horario, sort_order), products(nome, tipo)";
 
 function statusBadge(status: string) {
   if (status === "delivered") {
@@ -68,7 +66,7 @@ export function ItineraryView({
         async () => {
           const { data } = await supabase
             .from("order_items")
-            .select(ORDER_ITEMS_SELECT)
+            .select(ORDER_ITEMS_ADMIN_SELECT)
             .order("criado_em", { ascending: true });
           if (data) setItems(data as OrderItemWithRelations[]);
         },

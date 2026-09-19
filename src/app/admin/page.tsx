@@ -9,6 +9,8 @@ import { loadFinanceSummary } from "@/lib/finance";
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { ItemDestinoLabel } from "@/components/admin/item-destino-label";
+import { formatOrderItemProductLine } from "@/lib/order-item-display";
+import { ORDER_ITEMS_ADMIN_SELECT } from "@/lib/order-items-select";
 import type { OrderItemWithRelations } from "@/types/database";
 
 async function loadDashboard() {
@@ -19,9 +21,7 @@ async function loadDashboard() {
     supabase.from("order_items").select("id", { count: "exact", head: true }),
     supabase
       .from("order_items")
-      .select(
-        "*, teams!order_items_equipe_destino_id_fkey(nome), delivery_slots(horario), products(nome, tipo)",
-      )
+      .select(ORDER_ITEMS_ADMIN_SELECT)
       .order("criado_em", { ascending: false })
       .limit(50),
     loadFinanceSummary(supabase),
@@ -130,7 +130,7 @@ export default async function AdminHomePage() {
                     className="mt-1 font-bold text-foreground"
                   />
                   <p className="mt-2 text-sm text-foreground">
-                    {item.products?.nome} · {item.quantidade} un.
+                    {formatOrderItemProductLine(item)}
                   </p>
                 </Card>
               </li>
@@ -153,7 +153,7 @@ export default async function AdminHomePage() {
                   className="truncate text-sm font-semibold text-foreground"
                 />
                 <p className="truncate text-xs text-muted">
-                  {item.products?.nome}
+                  {formatOrderItemProductLine(item, false)}
                 </p>
               </div>
               <span className="shrink-0 text-xs text-muted">

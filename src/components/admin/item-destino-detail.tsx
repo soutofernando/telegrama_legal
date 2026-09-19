@@ -1,6 +1,7 @@
 import { CalendarClock, Gift, Music2, Package, User, Users } from "lucide-react";
 import { ProductKindBadge } from "@/components/vitrine/product-kind-badge";
 import { formatDateTime } from "@/lib/format";
+import { serenataSongTitulo } from "@/lib/order-item-display";
 import { PRODUCT_KIND_BADGE_CLASS } from "@/lib/product-kind";
 import type { OrderItemWithRelations } from "@/types/database";
 
@@ -47,6 +48,7 @@ export function ItemDestinoDetail({ item }: { item: OrderItemWithRelations }) {
   const kind = giftKindLabel(item);
   const isGift = Boolean(kind);
   const productTipo = item.products?.tipo;
+  const musica = serenataSongTitulo(item);
 
   return (
     <div className="space-y-3">
@@ -66,6 +68,14 @@ export function ItemDestinoDetail({ item }: { item: OrderItemWithRelations }) {
 
       <DestinoRow icon={User} label="Quem recebe" value={nome} />
       <DestinoRow icon={Users} label="Equipe destino" value={equipe} />
+
+      {productTipo === "serenata" && (
+        <DestinoRow
+          icon={Music2}
+          label="Música"
+          value={musica ?? "—"}
+        />
+      )}
 
       {item.products?.nome && (
         <div className="flex items-start gap-3 border-t border-border/60 pt-3">
