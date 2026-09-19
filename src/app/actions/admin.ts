@@ -381,7 +381,7 @@ export async function upsertOrderItemManual(data: {
       delivery_slot_id: data.delivery_slot_id,
       product_id: data.product_id,
       quantidade: data.quantidade,
-      status: "delivered",
+      status: "pending",
       eh_presente: true,
     });
     if (error) throw error;
