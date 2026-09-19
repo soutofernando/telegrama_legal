@@ -24,6 +24,7 @@ import {
   itemsForItineraryDay,
   sortSlots,
 } from "@/lib/itinerary";
+import { FULFILLMENT_LABELS } from "@/lib/fulfillment";
 import { createClient } from "@/lib/supabase/client";
 import type { DeliverySlot, OrderItemWithRelations } from "@/types/database";
 
@@ -238,9 +239,9 @@ export function ItineraryView({
             />
           </div>
           <p className="mt-4 text-sm leading-relaxed text-white/85">
-            {activeSlotItems.length} entrega
-            {activeSlotItems.length === 1 ? "" : "s"} pendente
-            {activeSlotItems.length === 1 ? "" : "s"} · ordem de chegada
+            {activeSlotItems.length} pendente
+            {activeSlotItems.length === 1 ? "" : "s"} (entrega ou retirada) ·
+            ordem de chegada
           </p>
         </div>
 
@@ -331,6 +332,13 @@ export function ItineraryView({
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="mb-4 flex flex-wrap items-start justify-end gap-2">
+                          <Badge variant="muted">
+                            {
+                              FULFILLMENT_LABELS[
+                                item.fulfillment_type ?? "delivery"
+                              ]
+                            }
+                          </Badge>
                           {item.status === "in_progress" &&
                             item.entregador_nome && (
                               <Badge variant="secondary">

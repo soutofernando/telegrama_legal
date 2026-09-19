@@ -1,4 +1,4 @@
-export type PaymentMethod = "whatsapp" | "on_delivery";
+export type PaymentMethod = "whatsapp" | "on_delivery" | "vendor_paid";
 export type FulfillmentType = "delivery" | "pickup";
 export type DeliveryStatus = "pending" | "in_progress" | "delivered";
 

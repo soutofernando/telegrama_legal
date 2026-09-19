@@ -18,7 +18,7 @@ export default async function ItineraryPage() {
   return (
     <AdminShell
       title="Itinerário"
-      subtitle="Rota de entrega no celular"
+      subtitle="Entregas e retiradas no balcão"
     >
       <ItineraryView
         initialItems={(data ?? []) as OrderItemWithRelations[]}

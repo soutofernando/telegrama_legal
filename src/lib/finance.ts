@@ -51,6 +51,7 @@ export function aggregateFinance(rows: FinanceRow[]): FinanceSummary {
   const byPayment: FinanceSummary["byPayment"] = {
     whatsapp: { revenue: 0, orderIds: new Set() },
     on_delivery: { revenue: 0, orderIds: new Set() },
+    vendor_paid: { revenue: 0, orderIds: new Set() },
   };
 
   const productMap = new Map<string, FinanceByProduct>();

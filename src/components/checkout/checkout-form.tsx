@@ -25,6 +25,7 @@ import type {
   AppSettings,
   DeliverySlot,
   FulfillmentType,
+  PaymentMethod,
   Team,
 } from "@/types/database";
 
@@ -46,9 +47,7 @@ export function CheckoutForm({
   const [equipeId, setEquipeId] = useState("");
   const [slotId, setSlotId] = useState("");
   const [fulfillment, setFulfillment] = useState<FulfillmentType>("delivery");
-  const [payment, setPayment] = useState<"whatsapp" | "on_delivery">(
-    "on_delivery",
-  );
+  const [payment, setPayment] = useState<PaymentMethod>("on_delivery");
   const [lineUnits, setLineUnits] = useState<
     Record<string, LineUnitRecipient[]>
   >({});
@@ -294,6 +293,34 @@ export function CheckoutForm({
                   {fulfillment === "pickup"
                     ? "Pagar na retirada"
                     : "Pagar na entrega"}
+                </span>
+                <span className="mt-0.5 block text-neutral-500">
+                  O pagamento é feito quando você receber o item. Aparece no
+                  itinerário como pendente.
+                </span>
+              </span>
+            </label>
+            <label
+              className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-colors ${
+                payment === "vendor_paid"
+                  ? "border-ecri-blue bg-ecri-blue/5"
+                  : "border-neutral-100"
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment"
+                checked={payment === "vendor_paid"}
+                onChange={() => setPayment("vendor_paid")}
+                className="mt-1 h-5 w-5 accent-ecri-blue"
+              />
+              <span className="text-sm">
+                <span className="font-semibold text-neutral-900">
+                  Pago agora! (VENDEDOR)
+                </span>
+                <span className="mt-0.5 block text-neutral-500">
+                  Venda presencial com o vendedor. O item já é registrado como
+                  entregue.
                 </span>
               </span>
             </label>

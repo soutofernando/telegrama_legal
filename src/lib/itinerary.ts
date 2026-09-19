@@ -43,8 +43,9 @@ export function formatItineraryDateLabel(ymd: string): string {
   }).format(dateFromYmd(ymd));
 }
 
-export function isDeliveryItem(item: OrderItemWithRelations): boolean {
-  return (item.fulfillment_type ?? "delivery") === "delivery";
+export function isItineraryItem(item: OrderItemWithRelations): boolean {
+  const type = item.fulfillment_type ?? "delivery";
+  return type === "delivery" || type === "pickup";
 }
 
 export function isActiveItineraryStatus(status: string): boolean {
@@ -57,17 +58,18 @@ export function itemsForItineraryDay(
 ): OrderItemWithRelations[] {
   return items.filter(
     (item) =>
-      isDeliveryItem(item) && getItineraryDateKey(item.criado_em) === dayKey,
+      isItineraryItem(item) &&
+      getItineraryDateKey(item.criado_em) === dayKey,
   );
 }
 
-/** Datas (AAAA-MM-DD) que possuem entregas, em ordem cronológica. */
+/** Datas (AAAA-MM-DD) que possuem entregas ou retiradas, em ordem cronológica. */
 export function collectItineraryDayKeys(
   items: OrderItemWithRelations[],
 ): string[] {
   const keys = new Set<string>();
   for (const item of items) {
-    if (!isDeliveryItem(item)) continue;
+    if (!isItineraryItem(item)) continue;
     keys.add(getItineraryDateKey(item.criado_em));
   }
   return Array.from(keys).sort();

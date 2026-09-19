@@ -20,7 +20,11 @@ import {
 } from "@/lib/finance";
 import type { PaymentMethod } from "@/types/database";
 
-const PAYMENT_ORDER: PaymentMethod[] = ["whatsapp", "on_delivery"];
+const PAYMENT_ORDER: PaymentMethod[] = [
+  "whatsapp",
+  "on_delivery",
+  "vendor_paid",
+];
 
 export default async function FinanceAdminPage() {
   const finance = await loadFinanceSummary();
